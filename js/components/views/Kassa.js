@@ -38,12 +38,12 @@ export const KassaView = {
             </div>
 
             <div class="stats-grid mt-4">
-                <div class="stat-card glass-panel" style="grid-column: 1/-1; padding:16px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                <div class="stat-card glass-panel" style="grid-column: 1/-1; padding:16px; display:flex; flex-direction:column; gap:16px;">
+                    <div style="display:flex; flex-direction:column; gap:4px;">
                         <span style="font-size:13px; color:rgba(255,255,255,0.8);">Ümumi Mədaxil:</span>
                         <span id="stat-income-total" style="font-size:16px; color:var(--success);">0 ₼</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+                    <div style="display:flex; flex-direction:column; gap:4px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
                         <span style="font-size:13px; color:rgba(255,255,255,0.8);">Ümumi Xərc:</span>
                         <span id="stat-total-expense" style="font-size:16px; color:var(--danger);">0 ₼</span>
                     </div>
