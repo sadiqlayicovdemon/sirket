@@ -264,7 +264,7 @@ export const FakturalarView = {
         this.renderDebtSummary({ buyerValue, sellerValue, fromValue, toValue });
 
         tbody.innerHTML = filtered.map(row => `
-            <tr>
+            <tr style="${this.getRowStyle(row)}">
                 <td>${this.escapeHtml(row.id)}</td>
                 <td>${this.escapeHtml(row.section)}</td>
                 <td>${api.formatDateTime(row.date)}</td>
@@ -275,6 +275,20 @@ export const FakturalarView = {
         `).join('');
     }
     ,
+
+    getRowStyle(row) {
+        // Stronger visual separation between sales and payments in filtered results.
+        if (row.section === 'Satış') {
+            return 'background: rgba(16, 185, 129, 0.08);';
+        }
+        if (row.section === 'Kassa') {
+            return 'background: rgba(59, 130, 246, 0.08);';
+        }
+        if (row.section === 'Daxil Olma') {
+            return 'background: rgba(245, 158, 11, 0.08);';
+        }
+        return '';
+    },
 
     renderDebtSummary({ buyerValue, sellerValue, fromValue, toValue }) {
         const wrapper = document.getElementById('f-debt-summary');
