@@ -43,9 +43,9 @@ export const KassaView = {
                     <button class="btn-outline btn-sm" id="refresh-kassa"><i class="ph ph-arrows-clockwise"></i> Yenilə</button>
                 </div>
                 <table class="data-table">
-                    <thead><tr><th>Tarix</th><th>Müştəri / Şəxs</th><th>Təyinat</th><th>Növ</th><th>Məbləğ</th></tr></thead>
+                    <thead><tr><th>Tarix</th><th>Müştəri / Şəxs</th><th>Təyinat</th><th>Növ</th><th>Məbləğ</th><th>Əməliyyat</th></tr></thead>
                     <tbody id="kassa-table-body">
-                        <tr><td colspan="5" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> Yüklənir...</td></tr>
+                        <tr><td colspan="6" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> Yüklənir...</td></tr>
                     </tbody>
                 </table>
 
@@ -55,7 +55,7 @@ export const KassaView = {
             <div id="kassa-modal" class="modal hidden">
                 <div class="modal-content glass-panel">
                     <div class="modal-header">
-                        <h3>Yeni Əməliyyat</h3>
+                        <h3 id="k-modal-title">Yeni Əməliyyat</h3>
                         <button id="close-modal" class="icon-btn"><i class="ph ph-x"></i></button>
                     </div>
                     <form id="kassa-form" class="modal-form">
@@ -106,6 +106,17 @@ export const KassaView = {
 
         this.loadData();
         this.setupRealtime();
+        document.getElementById('kassa-table-body')?.addEventListener('click', (e) => {
+            const btn = e.target?.closest?.('[data-edit-kassa]');
+            if (!btn) return;
+            if (!canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
+                return;
+            }
+            const id = Number(btn.dataset.editKassa);
+            const row = (this._todayKassaData || []).find(r => r.id === id);
+            if (row) this.openEditModal(row);
+        });
         
         // Listeners
         document.getElementById('refresh-kassa')?.addEventListener('click', () => this.loadData());
@@ -115,18 +126,11 @@ export const KassaView = {
         const btnClose = document.getElementById('close-modal');
         const form = document.getElementById('kassa-form');
         const submitBtn = document.getElementById('k-submit');
-        
-        // Restrict write actions to admin/mudur.
-        if (!canEditDocs) {
-            if (btnNew) btnNew.style.display = 'none';
-            if (form) form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
-        }
+
+        this._canEditDocs = canEditDocs;
+        this._kassaEditingId = null;
 
         btnNew.addEventListener('click', async () => {
-            if (!canEditDocs) {
-                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
-                return;
-            }
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -134,6 +138,10 @@ export const KassaView = {
             
             form.reset();
             document.getElementById('k-date').value = `${year}-${month}-${day}`;
+            document.getElementById('k-modal-title').textContent = 'Yeni Əməliyyat';
+            submitBtn.textContent = 'Yarat';
+            submitBtn.disabled = false;
+            this._kassaEditingId = null;
             document.getElementById('customer-group').style.display = 'none';
             document.getElementById('expense-group').style.display = 'none';
             document.getElementById('k-desc').value = '';
@@ -225,15 +233,19 @@ export const KassaView = {
         btnClose.addEventListener('click', () => {
             modal.classList.add('hidden');
             modal.classList.remove('modal-active');
+            this._kassaEditingId = null;
+            document.getElementById('k-modal-title').textContent = 'Yeni Əməliyyat';
+            submitBtn.textContent = 'Yarat';
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!canEditDocs) {
-                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+            const type = document.getElementById('k-type').value;
+            const isEdit = this._kassaEditingId !== null && this._kassaEditingId !== undefined;
+            if (isEdit && !canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
-            const type = document.getElementById('k-type').value;
             const data = {
                 date: document.getElementById('k-date').value,
                 customer: type === 'Xerc' ? '' : document.getElementById('k-customer').value,
@@ -248,10 +260,16 @@ export const KassaView = {
             submitBtn.disabled = true;
 
             try {
-                await api.addKassaRecord(data);
+                if (isEdit) {
+                    await api.updateKassaRecord(this._kassaEditingId, data);
+                } else {
+                    await api.addKassaRecord(data);
+                }
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-active');
                 form.reset();
+                this._kassaEditingId = null;
+                document.getElementById('k-modal-title').textContent = 'Yeni Əməliyyat';
                 this.loadData(); // reload table
             } catch(err) {
                 alert('Xəta: ' + err.message);
@@ -287,14 +305,15 @@ export const KassaView = {
         const todayStr = api.dateKey(new Date());
 
         try {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';
             const res = await api.getKassaList();
             this.kassaData = res.data || [];
             const todayData = this.kassaData.filter(row => api.dateKey(row.date) === todayStr);
+            this._todayKassaData = todayData;
             this.renderTable(todayData);
             this.updateStats(this.kassaData, todayData, todayStr);
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="5" style="color:var(--danger); text-align:center;">Xəta baş verdi!</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--danger); text-align:center;">Xəta baş verdi!</td></tr>';
         }
     },
 
@@ -303,7 +322,7 @@ export const KassaView = {
         if (!tbody) return;
 
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Bu gün üçün əməliyyat tapılmadı.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Bu gün üçün əməliyyat tapılmadı.</td></tr>';
             return;
         }
 
@@ -315,8 +334,84 @@ export const KassaView = {
                 <td>${row.desc || '-'}</td>
                 <td style="color:${color}; font-weight:500;">${row.type}</td>
                 <td style="color:${color}; font-weight:500;">${row.amount}</td>
+                <td>
+                    ${this._canEditDocs ? `<button class="btn-outline btn-sm" data-edit-kassa="${row.id}">Düzəliş</button>` : '-'}
+                </td>
             </tr>`;
         }).join('');
+    },
+
+    openEditModal(row) {
+        if (!this._canEditDocs) return;
+        const modal = document.getElementById('kassa-modal');
+        const modalTitle = document.getElementById('k-modal-title');
+        const submitBtn = document.getElementById('k-submit');
+
+        if (!modal || !modalTitle || !submitBtn) return;
+
+        this._kassaEditingId = row.id;
+        modalTitle.textContent = 'Düzəliş et';
+        submitBtn.textContent = 'Yenilə';
+        submitBtn.disabled = false;
+
+        document.getElementById('k-date').value = String(row.date || '').slice(0, 10);
+        document.getElementById('k-type').value = row.type || '';
+        document.getElementById('k-amount').value = this.parseAmount(row.amount).toFixed(2);
+
+        const type = row.type;
+        const customerGroup = document.getElementById('customer-group');
+        const customerSelect = document.getElementById('k-customer');
+        const customerLabel = document.getElementById('customer-label');
+        const descGroup = document.getElementById('desc-group');
+        const descInput = document.getElementById('k-desc');
+        const expenseGroup = document.getElementById('expense-group');
+        const expenseSelect = document.getElementById('k-expense');
+
+        // Reset minimal UI.
+        customerGroup.style.display = 'none';
+        expenseGroup.style.display = 'none';
+        descGroup.style.display = 'none';
+        descInput.required = false;
+
+        if (type === 'Mədaxil' || type === 'Məxaric') {
+            customerGroup.style.display = 'block';
+            expenseGroup.style.display = 'none';
+            descGroup.style.display = 'block';
+
+            customerLabel.textContent = type === 'Mədaxil' ? 'Alıcı seçin' : 'Satıcı seçin';
+            customerSelect.required = true;
+            customerSelect.disabled = false;
+
+            // Customer select: set single option.
+            customerSelect.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = row.customer || '';
+            opt.textContent = row.customer || '';
+            customerSelect.appendChild(opt);
+            customerSelect.value = row.customer || '';
+
+            expenseSelect.required = false;
+            descInput.value = row.desc || '';
+        } else if (type === 'Xerc') {
+            customerGroup.style.display = 'none';
+            expenseGroup.style.display = 'block';
+            descGroup.style.display = 'none';
+
+            customerSelect.required = false;
+            customerSelect.disabled = false;
+            expenseSelect.required = true;
+            expenseSelect.disabled = false;
+
+            expenseSelect.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = row.desc || '';
+            opt.textContent = row.desc || '';
+            expenseSelect.appendChild(opt);
+            expenseSelect.value = row.desc || '';
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-active');
     },
 
     parseAmount(value) {

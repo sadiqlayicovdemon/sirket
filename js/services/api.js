@@ -209,6 +209,38 @@ export const api = {
         return { success: true, data: created };
     },
 
+    updateKassaRecord: async (recordId, recordData) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const datePart = (recordData.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
+        const timePart = new Date().toTimeString().split(' ')[0].slice(0, 8);
+        const type = recordData.type;
+        const amountNum = Number(recordData.amount);
+
+        if (!type) throw new Error('Sənəd növü seçilməlidir.');
+        if (!Number.isFinite(amountNum) || amountNum <= 0) throw new Error('Məbləğ düzgün deyil.');
+
+        const payload = {
+            document_date: datePart,
+            document_time: timePart,
+            customer_name: recordData.customer || null,
+            description: recordData.desc || null,
+            document_type: type,
+            amount: amountNum,
+            currency: 'AZN',
+            status: type === 'Mədaxil' ? 'success' : 'danger'
+        };
+
+        const { error } = await supabase
+            .from('kassa_records')
+            .update(payload)
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
+
     // Satis Endpoints
     getSatisList: async () => {
         await delay(API_DELAY);
@@ -234,10 +266,12 @@ export const api = {
 
             return {
                 id: `#${r.id}`,
+                dbId: r.id,
                 date,
                 customer: r.customer_name,
                 product: r.product_name || 'Satış',
                 amount: `${Number(r.amount).toLocaleString('az-AZ')} ₼`,
+                amountValue: Number(r.amount),
                 status,
                 statusClass
             };
@@ -301,6 +335,36 @@ export const api = {
                 statusClass: 'status-success'
             }
         };
+    },
+
+    updateSatisRecord: async (recordId, recordData) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const datePart = (recordData.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
+        const timePart = new Date().toTimeString().split(' ')[0].slice(0, 8);
+        const amountNum = Number(recordData.amount);
+
+        if (!recordData.customer) throw new Error('Müştəri seçilməlidir.');
+        if (!Number.isFinite(amountNum) || amountNum <= 0) throw new Error('Məbləğ düzgün deyil.');
+
+        const payload = {
+            document_date: datePart,
+            document_time: timePart,
+            customer_name: recordData.customer,
+            product_name: recordData.product || 'Satış',
+            amount: amountNum,
+            currency: 'AZN',
+            status: 'Tamamlandı'
+        };
+
+        const { error } = await supabase
+            .from('sales_records')
+            .update(payload)
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
     },
 
     // Daxil Olmalar Endpoints
@@ -389,6 +453,36 @@ export const api = {
                 statusClass: 'status-success'
             }
         };
+    },
+
+    updateDaxilOlmalarRecord: async (recordId, recordData) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const datePart = (recordData.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
+        const timePart = new Date().toTimeString().split(' ')[0].slice(0, 8);
+        const totalNum = Number(recordData.total);
+
+        if (!recordData.supplier) throw new Error('Tədarükçü seçilməlidir.');
+        if (!Number.isFinite(totalNum) || totalNum <= 0) throw new Error('Məbləğ düzgün deyil.');
+
+        const payload = {
+            document_date: datePart,
+            document_time: timePart,
+            supplier_name: recordData.supplier,
+            item_count: 1,
+            total_amount: totalNum,
+            currency: 'AZN',
+            status: 'Təsdiqləndi'
+        };
+
+        const { error } = await supabase
+            .from('incoming_records')
+            .update(payload)
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
     },
 
     // Fakturalar Endpoints

@@ -30,9 +30,9 @@ export const SatisView = {
                     </div>
                 </div>
                 <table class="data-table">
-                    <thead><tr><th>ID</th><th>Tarix</th><th>Müştəri</th><th>Məhsul</th><th>Məbləğ</th><th>Status</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Tarix</th><th>Müştəri</th><th>Məhsul</th><th>Məbləğ</th><th>Status</th><th>Əməliyyat</th></tr></thead>
                     <tbody id="satis-table-body">
-                        <tr><td colspan="6" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> Yüklənir...</td></tr>
+                        <tr><td colspan="7" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> Yüklənir...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -40,13 +40,13 @@ export const SatisView = {
             <div id="satis-modal" class="modal hidden">
                 <div class="modal-content glass-panel">
                     <div class="modal-header">
-                        <h3>Yeni Satış</h3>
+                        <h3 id="satis-modal-title">Yeni Satış</h3>
                         <button id="close-satis-modal" class="icon-btn"><i class="ph ph-x"></i></button>
                     </div>
                     <form id="satis-form" class="modal-form">
                         <div class="form-group">
                             <label>Tarix</label>
-                            <input type="date" id="satis-date" disabled>
+                            <input type="date" id="satis-date">
                         </div>
                         <div class="form-group">
                             <label>Müştəri *</label>
@@ -70,6 +70,9 @@ export const SatisView = {
         const role = AuthState.user?.role;
         const canEditDocs = role === 'Administrator' || role === 'Müdir';
 
+        this._canEditDocs = canEditDocs;
+        this._satisEditingId = null;
+
         this.loadData();
         this.setupRealtime();
         document.getElementById('refresh-satis')?.addEventListener('click', () => this.loadData());
@@ -79,17 +82,23 @@ export const SatisView = {
         const btnClose = document.getElementById('close-satis-modal');
         const form = document.getElementById('satis-form');
 
-        // Restrict write actions to admin/mudur.
-        if (!canEditDocs) {
-            if (btnNew) btnNew.style.display = 'none';
-            if (form) form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
-        }
-
-        btnNew.addEventListener('click', async () => {
+        document.getElementById('satis-table-body')?.addEventListener('click', (e) => {
+            const btn = e.target?.closest?.('[data-edit-satis]');
+            if (!btn) return;
             if (!canEditDocs) {
-                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
+            const dbId = Number(btn.dataset.editSatis);
+            const row = (this._satisData || []).find(r => r.dbId === dbId);
+            if (row) this.openEditModal(row);
+        });
+
+        btnNew.addEventListener('click', async () => {
+            this._satisEditingId = null;
+            document.getElementById('satis-modal-title').textContent = 'Yeni Satış';
+            document.getElementById('satis-submit').textContent = 'Yadda Saxla';
+
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -119,12 +128,16 @@ export const SatisView = {
         btnClose.addEventListener('click', () => {
             modal.classList.add('hidden');
             modal.classList.remove('modal-active');
+            this._satisEditingId = null;
+            document.getElementById('satis-modal-title').textContent = 'Yeni Satış';
+            document.getElementById('satis-submit').textContent = 'Yadda Saxla';
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!canEditDocs) {
-                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+            const isEdit = this._satisEditingId !== null && this._satisEditingId !== undefined;
+            if (isEdit && !canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
             const customer = document.getElementById('satis-customer').value;
@@ -141,10 +154,16 @@ export const SatisView = {
             submitBtn.textContent = 'Yadda saxlanılır...';
 
             try {
-                await api.addSatisRecord({ date, customer, amount: amountValue });
+                if (isEdit) {
+                    await api.updateSatisRecord(this._satisEditingId, { date, customer, amount: amountValue });
+                } else {
+                    await api.addSatisRecord({ date, customer, amount: amountValue });
+                }
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-active');
                 this.loadData();
+                this._satisEditingId = null;
+                document.getElementById('satis-modal-title').textContent = 'Yeni Satış';
             } catch (err) {
                 alert('Satış qeydə alınmadı: ' + err.message);
             } finally {
@@ -170,6 +189,46 @@ export const SatisView = {
             .subscribe();
     },
 
+    openEditModal(row) {
+        if (!this._canEditDocs) return;
+        this._satisEditingId = row.dbId;
+
+        const modal = document.getElementById('satis-modal');
+        const modalTitle = document.getElementById('satis-modal-title');
+        const submitBtn = document.getElementById('satis-submit');
+        const dateInput = document.getElementById('satis-date');
+        const customerSelect = document.getElementById('satis-customer');
+        const amountInput = document.getElementById('satis-amount');
+
+        if (!modal || !modalTitle || !submitBtn) return;
+
+        modalTitle.textContent = 'Düzəliş et';
+        submitBtn.textContent = 'Yenilə';
+        submitBtn.disabled = false;
+
+        dateInput.disabled = false;
+        dateInput.value = String(row.date || '').slice(0, 10);
+
+        customerSelect.disabled = false;
+        customerSelect.required = true;
+        customerSelect.innerHTML = '';
+        const opt = document.createElement('option');
+        opt.value = row.customer || '';
+        opt.textContent = row.customer || '';
+        customerSelect.appendChild(opt);
+        customerSelect.value = row.customer || '';
+
+        const cleaned = String(row.amount || '')
+            .replace(/[^\d.,-]/g, '')
+            .replace(/,/g, '');
+        const num = parseFloat(cleaned);
+        const abs = isNaN(num) ? 0 : Math.abs(num);
+        amountInput.value = abs.toFixed(2);
+
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-active');
+    },
+
     async loadData() {
         const tbody = document.getElementById('satis-table-body');
         if (!tbody) return;
@@ -192,7 +251,8 @@ export const SatisView = {
                 todaySalesEl.textContent = `${todaySales.toLocaleString('az-AZ')} ₼`;
             }
 
-            tbody.innerHTML = res.data.map(row => `
+            this._satisData = res.data || [];
+            tbody.innerHTML = this._satisData.map(row => `
                 <tr>
                     <td>${row.id}</td>
                     <td>${api.formatDateTime(row.date)}</td>
@@ -200,6 +260,7 @@ export const SatisView = {
                     <td>${row.product}</td>
                     <td>${row.amount}</td>
                     <td><span class="status-badge ${row.statusClass}">${row.status}</span></td>
+                    <td>${this._canEditDocs ? `<button class="btn-outline btn-sm" data-edit-satis="${row.dbId}">Düzəliş</button>` : '-'}</td>
                 </tr>
             `).join('');
         } catch (e) {

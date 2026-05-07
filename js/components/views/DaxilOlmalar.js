@@ -17,9 +17,9 @@ export const DaxilOlmalarView = {
             </div>
             <div class="table-container glass-panel mt-4">
                 <table class="data-table">
-                    <thead><tr><th>Tarix</th><th>Tədarükçü</th><th>Toplam Dəyər</th></tr></thead>
+                    <thead><tr><th>Tarix</th><th>Tədarükçü</th><th>Toplam Dəyər</th><th>Əməliyyat</th></tr></thead>
                     <tbody id="daxil-table-body">
-                        <tr><td colspan="3" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> Yüklənir...</td></tr>
+                        <tr><td colspan="4" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> Yüklənir...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -27,13 +27,13 @@ export const DaxilOlmalarView = {
             <div id="daxil-modal" class="modal hidden">
                 <div class="modal-content glass-panel">
                     <div class="modal-header">
-                        <h3>Yeni Sənəd</h3>
+                        <h3 id="daxil-modal-title">Yeni Sənəd</h3>
                         <button id="close-daxil-modal" class="icon-btn"><i class="ph ph-x"></i></button>
                     </div>
                     <form id="daxil-form" class="modal-form">
                         <div class="form-group">
                             <label>Tarix</label>
-                            <input type="date" id="daxil-date" disabled>
+                            <input type="date" id="daxil-date">
                         </div>
                         <div class="form-group">
                             <label>Tədarükçü *</label>
@@ -57,6 +57,9 @@ export const DaxilOlmalarView = {
         const role = AuthState.user?.role;
         const canEditDocs = role === 'Administrator' || role === 'Müdir';
 
+        this._canEditDocs = canEditDocs;
+        this._daxilEditingId = null;
+
         this.loadData();
         this.setupRealtime();
         document.getElementById('refresh-daxil')?.addEventListener('click', () => this.loadData());
@@ -65,18 +68,24 @@ export const DaxilOlmalarView = {
         const btnNew = document.getElementById('btn-new-daxil');
         const btnClose = document.getElementById('close-daxil-modal');
         const form = document.getElementById('daxil-form');
-        
-        // Restrict write actions to admin/mudur.
-        if (!canEditDocs) {
-            if (btnNew) btnNew.style.display = 'none';
-            if (form) form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
-        }
 
-        btnNew.addEventListener('click', async () => {
+        document.getElementById('daxil-table-body')?.addEventListener('click', (e) => {
+            const btn = e.target?.closest?.('[data-edit-daxil]');
+            if (!btn) return;
             if (!canEditDocs) {
-                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
+            const id = Number(btn.dataset.editDaxil);
+            const row = (this._daxilData || []).find(r => r.id === id);
+            if (row) this.openEditModal(row);
+        });
+
+        btnNew.addEventListener('click', async () => {
+            this._daxilEditingId = null;
+            document.getElementById('daxil-modal-title').textContent = 'Yeni Sənəd';
+            document.getElementById('daxil-submit').textContent = 'Yadda Saxla';
+
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -106,12 +115,16 @@ export const DaxilOlmalarView = {
         btnClose.addEventListener('click', () => {
             modal.classList.add('hidden');
             modal.classList.remove('modal-active');
+            this._daxilEditingId = null;
+            document.getElementById('daxil-modal-title').textContent = 'Yeni Sənəd';
+            document.getElementById('daxil-submit').textContent = 'Yadda Saxla';
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!canEditDocs) {
-                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+            const isEdit = this._daxilEditingId !== null && this._daxilEditingId !== undefined;
+            if (isEdit && !canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
             const supplier = document.getElementById('daxil-supplier').value;
@@ -128,10 +141,16 @@ export const DaxilOlmalarView = {
             submitBtn.textContent = 'Yadda saxlanılır...';
 
             try {
-                await api.addDaxilOlmalarRecord({ date, supplier, total });
+                if (isEdit) {
+                    await api.updateDaxilOlmalarRecord(this._daxilEditingId, { date, supplier, total });
+                } else {
+                    await api.addDaxilOlmalarRecord({ date, supplier, total });
+                }
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-active');
                 this.loadData();
+                this._daxilEditingId = null;
+                document.getElementById('daxil-modal-title').textContent = 'Yeni Sənəd';
             } catch (err) {
                 alert('Sənəd qeydə alınmadı: ' + err.message);
             } finally {
@@ -157,23 +176,67 @@ export const DaxilOlmalarView = {
             .subscribe();
     },
 
+    openEditModal(row) {
+        if (!this._canEditDocs) return;
+
+        this._daxilEditingId = row.id;
+
+        const modal = document.getElementById('daxil-modal');
+        const modalTitle = document.getElementById('daxil-modal-title');
+        const submitBtn = document.getElementById('daxil-submit');
+        const dateInput = document.getElementById('daxil-date');
+        const supplierSelect = document.getElementById('daxil-supplier');
+        const totalInput = document.getElementById('daxil-total');
+
+        if (!modal || !modalTitle || !submitBtn) return;
+
+        modalTitle.textContent = 'Düzəliş et';
+        submitBtn.textContent = 'Yenilə';
+
+        dateInput.disabled = false;
+        dateInput.value = String(row.date || '').slice(0, 10);
+
+        supplierSelect.disabled = false;
+        supplierSelect.required = true;
+        supplierSelect.innerHTML = '';
+        const opt = document.createElement('option');
+        opt.value = row.supplier || '';
+        opt.textContent = row.supplier || '';
+        supplierSelect.appendChild(opt);
+        supplierSelect.value = row.supplier || '';
+
+        const cleaned = String(row.total || '')
+            .replace(/[^\d.,-]/g, '')
+            .replace(/,/g, '');
+        const num = parseFloat(cleaned);
+        const abs = isNaN(num) ? 0 : Math.abs(num);
+        totalInput.value = abs.toFixed(2);
+
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-active');
+    },
+
     async loadData() {
         const tbody = document.getElementById('daxil-table-body');
         if (!tbody) return;
         
         try {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';
             const res = await api.getDaxilOlmalarList();
-            
-            tbody.innerHTML = res.data.map(row => `
+
+            this._daxilData = res.data || [];
+            tbody.innerHTML = this._daxilData.map(row => `
                 <tr>
                     <td>${api.formatDateTime(row.date)}</td>
                     <td>${row.supplier}</td>
                     <td>${row.total}</td>
+                    <td>
+                        ${this._canEditDocs ? `<button class="btn-outline btn-sm" data-edit-daxil="${row.id}">Düzəliş</button>` : '-'}
+                    </td>
                 </tr>
             `).join('');
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="3" style="color:var(--danger); text-align:center;">Xəta baş verdi!</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="color:var(--danger); text-align:center;">Xəta baş verdi!</td></tr>';
         }
     }
 };
