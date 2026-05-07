@@ -1,4 +1,5 @@
 import { api } from '../../services/api.js';
+import { AuthState } from '../../state/auth.js';
 
 export const MusteriView = {
     render() {
@@ -178,11 +179,20 @@ export const MusteriView = {
     },
 
     async afterRender() {
+        const role = AuthState.user?.role;
+        const canEditDocs = role === 'Administrator' || role === 'Müdir';
+        
         this.setupTabNavigation();
         this.loadBuyers();
         this.loadSellers();
         this.loadExpenses();
         this.setupEventListeners();
+
+        if (!canEditDocs) {
+            document.getElementById('btn-add-buyer')?.style && (document.getElementById('btn-add-buyer').style.display = 'none');
+            document.getElementById('btn-add-seller')?.style && (document.getElementById('btn-add-seller').style.display = 'none');
+            document.getElementById('btn-add-expense')?.style && (document.getElementById('btn-add-expense').style.display = 'none');
+        }
     },
 
     setupTabNavigation() {
@@ -354,6 +364,12 @@ export const MusteriView = {
     },
 
     async addBuyer() {
+        const role = AuthState.user?.role;
+        const canEditDocs = role === 'Administrator' || role === 'Müdir';
+        if (!canEditDocs) {
+            alert('Yalnız admin və müdir əlavə dəyişiklik edə bilər.');
+            return;
+        }
         const data = {
             name: document.getElementById('buyer-name').value,
             company: document.getElementById('buyer-company').value,
@@ -374,6 +390,12 @@ export const MusteriView = {
     },
 
     async addSeller() {
+        const role = AuthState.user?.role;
+        const canEditDocs = role === 'Administrator' || role === 'Müdir';
+        if (!canEditDocs) {
+            alert('Yalnız admin və müdir əlavə dəyişiklik edə bilər.');
+            return;
+        }
         const data = {
             name: document.getElementById('seller-name').value,
             company: document.getElementById('seller-company').value,
@@ -394,6 +416,12 @@ export const MusteriView = {
     },
 
     async addExpense() {
+        const role = AuthState.user?.role;
+        const canEditDocs = role === 'Administrator' || role === 'Müdir';
+        if (!canEditDocs) {
+            alert('Yalnız admin və müdir əlavə dəyişiklik edə bilər.');
+            return;
+        }
         const data = {
             name: document.getElementById('expense-name').value,
             category: document.getElementById('expense-category').value,

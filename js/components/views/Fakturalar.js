@@ -1,4 +1,5 @@
 import { api } from '../../services/api.js';
+import { supabase } from '../../services/supabase.js';
 
 export const FakturalarView = {
     render() {
@@ -62,6 +63,7 @@ export const FakturalarView = {
         this.bindFilterEvents();
         await this.populatePartyFilters();
         await this.loadData();
+        this.setupRealtime();
         document.getElementById('refresh-faktura')?.addEventListener('click', () => this.loadData());
     },
 
@@ -222,5 +224,37 @@ export const FakturalarView = {
                 <td><span class="status-badge ${row.statusClass}">${this.escapeHtml(row.status)}</span></td>
             </tr>
         `).join('');
+    }
+    ,
+
+    setupRealtime() {
+        if (!supabase) return;
+        try {
+            if (this._fakturaChannel) supabase.removeChannel(this._fakturaChannel);
+        } catch (_) {}
+
+        this._fakturaChannel = supabase
+            .channel('fakturalar_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'kassa_records' },
+                () => this.loadData()
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'sales_records' },
+                () => this.loadData()
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'incoming_records' },
+                () => this.loadData()
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'invoices' },
+                () => this.loadData()
+            )
+            .subscribe();
     }
 };

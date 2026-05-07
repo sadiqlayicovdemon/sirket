@@ -72,6 +72,22 @@ export const api = {
 
     formatDateTime: (value) => {
         if (!value) return '';
+        // Avoid timezone shifts on mobile/tablet:
+        // Our app stores dates like "YYYY-MM-DDTHH:mm:ss" as strings.
+        if (typeof value === 'string') {
+            const m = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+            if (m) {
+                const [, yyyy, mm, dd, hh, min, ssRaw] = m;
+                const ss = ssRaw || '00';
+                return `${dd}-${mm}-${yyyy} ${hh}:${min}:${ss}`;
+            }
+            const d = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (d) {
+                const [, yyyy, mm, dd] = d;
+                return `${dd}-${mm}-${yyyy}`;
+            }
+        }
+
         const date = new Date(value);
         if (isNaN(date)) return value;
         const pad = (n) => String(n).padStart(2, '0');
@@ -80,9 +96,20 @@ export const api = {
 
     dateKey: (value) => {
         if (!value) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+
+        if (value instanceof Date) {
+            if (isNaN(value)) return '';
+            return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+        }
+
+        // If it's already "YYYY-MM-DD..." just take the first 10 chars.
+        const s = String(value);
+        const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+
         const date = new Date(value);
         if (isNaN(date)) return '';
-        const pad = (n) => String(n).padStart(2, '0');
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
     },
 

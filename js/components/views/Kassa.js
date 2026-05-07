@@ -1,4 +1,6 @@
 import { api } from '../../services/api.js';
+import { AuthState } from '../../state/auth.js';
+import { supabase } from '../../services/supabase.js';
 
 export const KassaView = {
     render() {
@@ -99,7 +101,11 @@ export const KassaView = {
     },
 
     async afterRender() {
+        const role = AuthState.user?.role;
+        const canEditDocs = role === 'Administrator' || role === 'Müdir';
+
         this.loadData();
+        this.setupRealtime();
         
         // Listeners
         document.getElementById('refresh-kassa')?.addEventListener('click', () => this.loadData());
@@ -109,8 +115,18 @@ export const KassaView = {
         const btnClose = document.getElementById('close-modal');
         const form = document.getElementById('kassa-form');
         const submitBtn = document.getElementById('k-submit');
+        
+        // Restrict write actions to admin/mudur.
+        if (!canEditDocs) {
+            if (btnNew) btnNew.style.display = 'none';
+            if (form) form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
+        }
 
         btnNew.addEventListener('click', async () => {
+            if (!canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                return;
+            }
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -213,6 +229,10 @@ export const KassaView = {
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                return;
+            }
             const type = document.getElementById('k-type').value;
             const data = {
                 date: document.getElementById('k-date').value,
@@ -242,11 +262,29 @@ export const KassaView = {
         });
     },
 
+    setupRealtime() {
+        // Live updates (other tabs/devices) for kassa records.
+        if (!supabase) return;
+        try {
+            if (this._kassaChannel) supabase.removeChannel(this._kassaChannel);
+        } catch (_) {}
+
+        this._kassaChannel = supabase
+            .channel('kassa_records_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'kassa_records' },
+                () => this.loadData()
+            )
+            .subscribe();
+    },
+
     async loadData() {
         const tbody = document.getElementById('kassa-table-body');
         if (!tbody) return;
 
-        const todayStr = api.dateKey(new Date().toISOString());
+        // Use local date key to avoid timezone issues on mobile/tablet.
+        const todayStr = api.dateKey(new Date());
 
         try {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';

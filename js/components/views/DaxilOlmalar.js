@@ -1,4 +1,6 @@
 import { api } from '../../services/api.js';
+import { AuthState } from '../../state/auth.js';
+import { supabase } from '../../services/supabase.js';
 
 export const DaxilOlmalarView = {
     render() {
@@ -52,15 +54,29 @@ export const DaxilOlmalarView = {
     },
 
     async afterRender() {
+        const role = AuthState.user?.role;
+        const canEditDocs = role === 'Administrator' || role === 'Müdir';
+
         this.loadData();
+        this.setupRealtime();
         document.getElementById('refresh-daxil')?.addEventListener('click', () => this.loadData());
 
         const modal = document.getElementById('daxil-modal');
         const btnNew = document.getElementById('btn-new-daxil');
         const btnClose = document.getElementById('close-daxil-modal');
         const form = document.getElementById('daxil-form');
+        
+        // Restrict write actions to admin/mudur.
+        if (!canEditDocs) {
+            if (btnNew) btnNew.style.display = 'none';
+            if (form) form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
+        }
 
         btnNew.addEventListener('click', async () => {
+            if (!canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                return;
+            }
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -94,6 +110,10 @@ export const DaxilOlmalarView = {
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                return;
+            }
             const supplier = document.getElementById('daxil-supplier').value;
             const total = document.getElementById('daxil-total').value;
             const date = document.getElementById('daxil-date').value;
@@ -119,6 +139,22 @@ export const DaxilOlmalarView = {
                 submitBtn.textContent = 'Yadda Saxla';
             }
         });
+    },
+
+    setupRealtime() {
+        if (!supabase) return;
+        try {
+            if (this._daxilChannel) supabase.removeChannel(this._daxilChannel);
+        } catch (_) {}
+
+        this._daxilChannel = supabase
+            .channel('incoming_records_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'incoming_records' },
+                () => this.loadData()
+            )
+            .subscribe();
     },
 
     async loadData() {

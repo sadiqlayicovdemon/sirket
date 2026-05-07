@@ -1,4 +1,6 @@
 import { api } from '../../services/api.js';
+import { AuthState } from '../../state/auth.js';
+import { supabase } from '../../services/supabase.js';
 
 export const SatisView = {
     render() {
@@ -65,7 +67,11 @@ export const SatisView = {
     },
 
     async afterRender() {
+        const role = AuthState.user?.role;
+        const canEditDocs = role === 'Administrator' || role === 'Müdir';
+
         this.loadData();
+        this.setupRealtime();
         document.getElementById('refresh-satis')?.addEventListener('click', () => this.loadData());
 
         const modal = document.getElementById('satis-modal');
@@ -73,7 +79,17 @@ export const SatisView = {
         const btnClose = document.getElementById('close-satis-modal');
         const form = document.getElementById('satis-form');
 
+        // Restrict write actions to admin/mudur.
+        if (!canEditDocs) {
+            if (btnNew) btnNew.style.display = 'none';
+            if (form) form.querySelector('button[type="submit"]')?.setAttribute('disabled', 'true');
+        }
+
         btnNew.addEventListener('click', async () => {
+            if (!canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                return;
+            }
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -107,6 +123,10 @@ export const SatisView = {
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!canEditDocs) {
+                alert('Yalnız admin və müdir sənədləri dəyişdirə bilər.');
+                return;
+            }
             const customer = document.getElementById('satis-customer').value;
             const amountValue = document.getElementById('satis-amount').value;
             const date = document.getElementById('satis-date').value;
@@ -134,12 +154,29 @@ export const SatisView = {
         });
     },
 
+    setupRealtime() {
+        if (!supabase) return;
+        try {
+            if (this._satisChannel) supabase.removeChannel(this._satisChannel);
+        } catch (_) {}
+
+        this._satisChannel = supabase
+            .channel('sales_records_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'sales_records' },
+                () => this.loadData()
+            )
+            .subscribe();
+    },
+
     async loadData() {
         const tbody = document.getElementById('satis-table-body');
         if (!tbody) return;
         
         try {
-            const todayStr = api.dateKey(new Date().toISOString());
+            // Use local date key to avoid timezone issues on mobile/tablet.
+            const todayStr = api.dateKey(new Date());
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';
             const res = await api.getSatisList();
             
