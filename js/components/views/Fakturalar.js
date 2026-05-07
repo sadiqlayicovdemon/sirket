@@ -40,6 +40,35 @@ export const FakturalarView = {
                     </div>
                 </div>
             </div>
+            <div id="f-debt-summary" class="glass-panel" style="padding:14px; margin-top:16px; display:none;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <div>
+                        <div style="color:var(--text-light); font-size:0.9rem;">Borc kalkulyasiyası</div>
+                        <h3 id="f-debt-title" style="margin:4px 0 0 0;">-</h3>
+                    </div>
+                    <div style="color:var(--text-light); font-size:0.9rem;">
+                        <span id="f-debt-period">-</span>
+                    </div>
+                </div>
+                <div class="stats-grid" style="margin-top:12px;">
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon" style="background:rgba(0,0,0,0.15);"><i class="ph ph-piggy-bank"></i></div>
+                        <div class="stat-details"><p>İlkin borc</p><h3 id="f-debt-initial">0 ₼</h3></div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon income"><i class="ph ph-shopping-cart"></i></div>
+                        <div class="stat-details"><p>Satılan məbləğ</p><h3 id="f-debt-sold">0 ₼</h3></div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon expense"><i class="ph ph-bank"></i></div>
+                        <div class="stat-details"><p>Ödənilən pul</p><h3 id="f-debt-paid">0 ₼</h3></div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon balance"><i class="ph ph-calculator"></i></div>
+                        <div class="stat-details"><p>Yekun borc</p><h3 id="f-debt-final">0 ₼</h3></div>
+                    </div>
+                </div>
+            </div>
             <div class="table-container glass-panel mt-4">
                 <div class="table-header">
                     <h3>Sənədlərin Xronoloji Cədvəli</h3>
@@ -77,8 +106,18 @@ export const FakturalarView = {
         const onChange = () => this.applyFiltersAndRender();
         fromEl?.addEventListener('change', onChange);
         toEl?.addEventListener('change', onChange);
-        buyerEl?.addEventListener('change', onChange);
-        sellerEl?.addEventListener('change', onChange);
+        buyerEl?.addEventListener('change', () => {
+            if (buyerEl?.value) {
+                if (sellerEl) sellerEl.value = '';
+            }
+            onChange();
+        });
+        sellerEl?.addEventListener('change', () => {
+            if (sellerEl?.value) {
+                if (buyerEl) buyerEl.value = '';
+            }
+            onChange();
+        });
         clearBtn?.addEventListener('click', () => {
             if (fromEl) fromEl.value = '';
             if (toEl) toEl.value = '';
@@ -139,6 +178,7 @@ export const FakturalarView = {
                     buyer: null,
                     seller: null,
                     amount: row.amount,
+                    amountValue: api.parseMoney(row.amount),
                     status: row.status,
                     statusClass: row.statusClass
                 })),
@@ -150,8 +190,11 @@ export const FakturalarView = {
                     buyer: row.type === 'Mədaxil' ? (row.customer || null) : null,
                     seller: row.type === 'Məxaric' ? (row.customer || null) : null,
                     amount: row.amount,
+                    amountValue: api.parseMoney(row.amount),
+                    kassaType: row.type,
                     status: row.type,
-                    statusClass: row.status === 'success' ? 'status-success' : 'status-danger'
+                    // Force section-based coloring for easier visual scanning.
+                    statusClass: 'status-info'
                 })),
                 ...satisRes.data.map(row => ({
                     id: row.id,
@@ -161,8 +204,10 @@ export const FakturalarView = {
                     buyer: row.customer || null,
                     seller: null,
                     amount: row.amount,
+                    amountValue: api.parseMoney(row.amount),
                     status: row.status,
-                    statusClass: row.statusClass
+                    // Force section-based coloring for easier visual scanning.
+                    statusClass: 'status-success'
                 })),
                 ...daxilRes.data.map(row => ({
                     id: `D-${row.id}`,
@@ -172,6 +217,7 @@ export const FakturalarView = {
                     buyer: null,
                     seller: row.supplier || null,
                     amount: row.total,
+                    amountValue: api.parseMoney(row.total),
                     status: row.status,
                     statusClass: row.statusClass
                 }))
@@ -211,8 +257,11 @@ export const FakturalarView = {
 
         if (!filtered.length) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-light);">Filtrə uyğun nəticə yoxdur.</td></tr>';
+            this.renderDebtSummary({ buyerValue, sellerValue, fromValue, toValue });
             return;
         }
+
+        this.renderDebtSummary({ buyerValue, sellerValue, fromValue, toValue });
 
         tbody.innerHTML = filtered.map(row => `
             <tr>
@@ -226,6 +275,109 @@ export const FakturalarView = {
         `).join('');
     }
     ,
+
+    renderDebtSummary({ buyerValue, sellerValue, fromValue, toValue }) {
+        const wrapper = document.getElementById('f-debt-summary');
+        if (!wrapper) return;
+
+        const initialEl = document.getElementById('f-debt-initial');
+        const soldEl = document.getElementById('f-debt-sold');
+        const paidEl = document.getElementById('f-debt-paid');
+        const finalEl = document.getElementById('f-debt-final');
+        const titleEl = document.getElementById('f-debt-title');
+        const periodEl = document.getElementById('f-debt-period');
+
+        if (!initialEl || !soldEl || !paidEl || !finalEl || !titleEl || !periodEl) return;
+
+        const hasBuyer = Boolean(buyerValue);
+        const hasSeller = Boolean(sellerValue);
+        if (!hasBuyer && !hasSeller) {
+            wrapper.style.display = 'none';
+            return;
+        }
+
+        wrapper.style.display = 'block';
+
+        // If both are selected, prioritize buyer.
+        const isBuyerMode = hasBuyer;
+        const partyName = isBuyerMode ? buyerValue : sellerValue;
+
+        titleEl.textContent = isBuyerMode ? `Alıcı: ${partyName}` : `Satıcı: ${partyName}`;
+
+        const fromTs = fromValue ? new Date(`${fromValue}T00:00:00`).getTime() : null;
+        const toTs = toValue ? new Date(`${toValue}T23:59:59`).getTime() : null;
+
+        const periodText = (() => {
+            if (!fromValue && !toValue) return 'Bütün dövriyyə';
+            if (fromValue && toValue) return `${fromValue} → ${toValue}`;
+            if (fromValue) return `${fromValue} →`;
+            return `→ ${toValue}`;
+        })();
+        periodEl.textContent = periodText;
+
+        let initialDebt = 0;
+        let soldAmount = 0;
+        let paidAmount = 0;
+
+        const rows = this.allRows || [];
+
+        // Collect transactions for debt:
+        // - Buyer mode:
+        //   sold = Satış where buyer matches
+        //   paid = Kassa where kassaType is 'Mədaxil' and buyer matches
+        // - Seller mode:
+        //   sold = Daxil Olma where seller matches
+        //   paid = Kassa where kassaType is 'Məxaric' and seller matches
+        const isInRange = (ts) => {
+            if (Number.isFinite(fromTs) && ts < fromTs) return false;
+            if (Number.isFinite(toTs) && ts > toTs) return false;
+            return true;
+        };
+
+        const isBeforeFrom = (ts) => {
+            if (!Number.isFinite(fromTs)) return false;
+            return ts < fromTs;
+        };
+
+        for (const r of rows) {
+            const ts = new Date(r.date).getTime();
+            if (!Number.isFinite(ts)) continue;
+
+            if (isBuyerMode) {
+                if (r.section === 'Satış' && r.buyer === partyName) {
+                    if (isBeforeFrom(ts)) initialDebt += r.amountValue;
+                    else if (isInRange(ts) || (!fromValue && !toValue)) soldAmount += r.amountValue;
+                }
+                if (r.section === 'Kassa' && r.kassaType === 'Mədaxil' && r.buyer === partyName) {
+                    if (isBeforeFrom(ts)) initialDebt -= r.amountValue;
+                    else if (isInRange(ts) || (!fromValue && !toValue)) paidAmount += r.amountValue;
+                }
+            } else {
+                if (r.section === 'Daxil Olma' && r.seller === partyName) {
+                    if (isBeforeFrom(ts)) initialDebt += r.amountValue;
+                    else if (isInRange(ts) || (!fromValue && !toValue)) soldAmount += r.amountValue;
+                }
+                if (r.section === 'Kassa' && r.kassaType === 'Məxaric' && r.seller === partyName) {
+                    if (isBeforeFrom(ts)) initialDebt -= r.amountValue;
+                    else if (isInRange(ts) || (!fromValue && !toValue)) paidAmount += r.amountValue;
+                }
+            }
+        }
+
+        // If no date was selected, we treat initialDebt as 0 and everything is in-range.
+        if (!fromValue && !toValue) {
+            // initialDebt already stays 0 by logic, but keep formula explicit.
+            initialDebt = 0;
+        }
+
+        const finalDebt = initialDebt + soldAmount - paidAmount;
+
+        initialEl.textContent = `${initialDebt.toLocaleString('az-AZ')} ₼`;
+        soldEl.textContent = `${soldAmount.toLocaleString('az-AZ')} ₼`;
+        paidEl.textContent = `${paidAmount.toLocaleString('az-AZ')} ₼`;
+        finalEl.textContent = `${finalDebt.toLocaleString('az-AZ')} ₼`;
+        finalEl.style.color = finalDebt >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
 
     setupRealtime() {
         if (!supabase) return;
