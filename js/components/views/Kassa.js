@@ -38,7 +38,7 @@ export const KassaView = {
             </div>
 
             <div class="stats-grid mt-4">
-                <div class="stat-card glass-panel" style="grid-column: 1/-1; padding:16px; display:flex; flex-direction:column; gap:16px;">
+                <div class="stat-card glass-panel" style="justify-self:start; max-width:320px; padding:16px; display:flex; flex-direction:column; gap:12px;">
                     <div style="display:flex; flex-direction:column; gap:4px;">
                         <span style="font-size:13px; color:rgba(255,255,255,0.8);">Ümumi Mədaxil:</span>
                         <span id="stat-income-total" style="font-size:16px; color:var(--success);">0 ₼</span>
