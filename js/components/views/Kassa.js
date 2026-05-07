@@ -38,21 +38,19 @@ export const KassaView = {
             </div>
 
             <div class="stats-grid mt-4">
-                <div class="stat-card glass-panel" style="grid-column: 1/-1;">
-                    <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1);">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                            <div class="stat-icon income"><i class="ph ph-trend-up"></i></div>
-                            <p style="margin:0; font-size:14px;">Ümumi Mədaxil</p>
-                        </div>
-                        <h3 id="stat-income-total" style="color:var(--success); margin:0; font-size:24px;">0 ₼</h3>
+                <div class="stat-card glass-panel">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <div class="stat-icon income"><i class="ph ph-trend-up"></i></div>
+                        <p style="margin:0; font-size:12px;">Ümumi Mədaxil</p>
                     </div>
-                    <div>
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                            <div class="stat-icon expense"><i class="ph ph-trend-down"></i></div>
-                            <p style="margin:0; font-size:14px;">Ümumi Xərc</p>
-                        </div>
-                        <h3 id="stat-total-expense" style="color:var(--danger); margin:0; font-size:24px;">0 ₼</h3>
+                    <h3 id="stat-income-total" style="color:var(--success); margin:0; font-size:16px;">0 ₼</h3>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <div class="stat-icon expense"><i class="ph ph-trend-down"></i></div>
+                        <p style="margin:0; font-size:12px;">Ümumi Xərc</p>
                     </div>
+                    <h3 id="stat-total-expense" style="color:var(--danger); margin:0; font-size:16px;">0 ₼</h3>
                 </div>
             </div>
             
