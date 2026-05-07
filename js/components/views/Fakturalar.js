@@ -377,7 +377,7 @@ export const FakturalarView = {
         paidEl.textContent = `${paidAmount.toLocaleString('az-AZ')} ₼`;
         finalEl.textContent = `${finalDebt.toLocaleString('az-AZ')} ₼`;
         finalEl.style.color = finalDebt >= 0 ? 'var(--success)' : 'var(--danger)';
-    }
+    },
 
     setupRealtime() {
         if (!supabase) return;
