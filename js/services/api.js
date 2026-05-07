@@ -6,9 +6,10 @@ import { supabase } from './supabase.js';
 const API_DELAY = 600; // Asinxronluğu simulyasiya etmək üçün gecikmə
 
 const MOCK_USERS = {
-    'admin': { id: 1, role: 'Administrator', name: 'Admin', password: '123' },
-    'mudur': { id: 2, role: 'Müdir', name: 'Müdir', password: '123' },
-    'muhasib': { id: 3, role: 'Mühasib', name: 'Mühasib', password: '123' }
+    'admin': { id: 1, role: 'Administrator', name: 'Admin', password: 'admin123' },
+    'mudur': { id: 2, role: 'Müdir',         name: 'Müdir', password: 'mudur123' },
+    'fuad':  { id: 3, role: 'İstifadəçi',    name: 'Fuad',  password: 'fuad123' },
+    'elgun': { id: 4, role: 'İstifadəçi',    name: 'Elgün', password: 'elgun123' }
 };
 
 const DB = {
