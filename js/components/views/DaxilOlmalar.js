@@ -69,14 +69,39 @@ export const DaxilOlmalarView = {
         const btnClose = document.getElementById('close-daxil-modal');
         const form = document.getElementById('daxil-form');
 
-        document.getElementById('daxil-table-body')?.addEventListener('click', (e) => {
-            const btn = e.target?.closest?.('[data-edit-daxil]');
-            if (!btn) return;
+        document.getElementById('daxil-table-body')?.addEventListener('click', async (e) => {
+            const deleteBtn = e.target?.closest?.('[data-delete-daxil]');
+            const editBtn = e.target?.closest?.('[data-edit-daxil]');
+
+            if (deleteBtn) {
+                if (!canEditDocs) {
+                    alert('Yalnız admin və müdir silə bilər.');
+                    return;
+                }
+                const id = Number(deleteBtn.dataset.deleteDaxil);
+                if (!id) return;
+                const ok = confirm('Bu əməliyyatı silmək istəyirsiniz?');
+                if (!ok) return;
+
+                try {
+                    await api.deleteDaxilOlmalarRecord(id);
+                    this._daxilEditingId = null;
+                    modal.classList.add('hidden');
+                    modal.classList.remove('modal-active');
+                    this.loadData();
+                } catch (err) {
+                    alert('Silinmə alınmadı: ' + err.message);
+                }
+                return;
+            }
+
+            if (!editBtn) return;
             if (!canEditDocs) {
                 alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
-            const id = Number(btn.dataset.editDaxil);
+
+            const id = Number(editBtn.dataset.editDaxil);
             const row = (this._daxilData || []).find(r => r.id === id);
             if (row) this.openEditModal(row);
         });
@@ -231,7 +256,16 @@ export const DaxilOlmalarView = {
                     <td>${row.supplier}</td>
                     <td>${row.total}</td>
                     <td>
-                        ${this._canEditDocs ? `<button class="btn-outline btn-sm" data-edit-daxil="${row.id}">Düzəliş</button>` : '-'}
+                        ${
+                            this._canEditDocs
+                                ? `
+                                    <div style="display:flex; gap:8px; justify-content:flex-end;">
+                                        <button class="btn-outline btn-sm btn-danger" data-delete-daxil="${row.id}">Sil</button>
+                                        <button class="btn-outline btn-sm" data-edit-daxil="${row.id}">Düzəliş</button>
+                                    </div>
+                                  `
+                                : '-'
+                        }
                     </td>
                 </tr>
             `).join('');

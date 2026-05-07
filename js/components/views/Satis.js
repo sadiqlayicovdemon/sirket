@@ -82,14 +82,35 @@ export const SatisView = {
         const btnClose = document.getElementById('close-satis-modal');
         const form = document.getElementById('satis-form');
 
-        document.getElementById('satis-table-body')?.addEventListener('click', (e) => {
-            const btn = e.target?.closest?.('[data-edit-satis]');
-            if (!btn) return;
+        document.getElementById('satis-table-body')?.addEventListener('click', async (e) => {
+            const deleteBtn = e.target?.closest?.('[data-delete-satis]');
+            const editBtn = e.target?.closest?.('[data-edit-satis]');
+
+            if (deleteBtn) {
+                if (!canEditDocs) {
+                    alert('Yalnız admin və müdir silə bilər.');
+                    return;
+                }
+                const dbId = Number(deleteBtn.dataset.deleteSatis);
+                if (!dbId) return;
+                const ok = confirm('Bu əməliyyatı silmək istəyirsiniz?');
+                if (!ok) return;
+
+                try {
+                    await api.deleteSatisRecord(dbId);
+                    this.loadData();
+                } catch (err) {
+                    alert('Silinmə alınmadı: ' + err.message);
+                }
+                return;
+            }
+
+            if (!editBtn) return;
             if (!canEditDocs) {
                 alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
-            const dbId = Number(btn.dataset.editSatis);
+            const dbId = Number(editBtn.dataset.editSatis);
             const row = (this._satisData || []).find(r => r.dbId === dbId);
             if (row) this.openEditModal(row);
         });
@@ -284,7 +305,18 @@ export const SatisView = {
                     <td>${row.product}</td>
                     <td>${row.amount}</td>
                     <td><span class="status-badge ${row.statusClass}">${row.status}</span></td>
-                    <td>${this._canEditDocs ? `<button class="btn-outline btn-sm" data-edit-satis="${row.dbId}">Düzəliş</button>` : '-'}</td>
+                    <td>
+                        ${
+                            this._canEditDocs
+                                ? `
+                                    <div style="display:flex; gap:8px; justify-content:flex-end;">
+                                        <button class="btn-outline btn-sm btn-danger" data-delete-satis="${row.dbId}">Sil</button>
+                                        <button class="btn-outline btn-sm" data-edit-satis="${row.dbId}">Düzəliş</button>
+                                    </div>
+                                `
+                                : '-'
+                        }
+                    </td>
                 </tr>
             `).join('');
         } catch (e) {

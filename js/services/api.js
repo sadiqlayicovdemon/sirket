@@ -241,6 +241,19 @@ export const api = {
         return { success: true };
     },
 
+    deleteKassaRecord: async (recordId) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const { error } = await supabase
+            .from('kassa_records')
+            .delete()
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
+
     // Satis Endpoints
     getSatisList: async () => {
         await delay(API_DELAY);
@@ -367,6 +380,19 @@ export const api = {
         return { success: true };
     },
 
+    deleteSatisRecord: async (recordId) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const { error } = await supabase
+            .from('sales_records')
+            .delete()
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
+
     // Daxil Olmalar Endpoints
     getDaxilOlmalarList: async () => {
         await delay(API_DELAY);
@@ -479,6 +505,19 @@ export const api = {
         const { error } = await supabase
             .from('incoming_records')
             .update(payload)
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
+
+    deleteDaxilOlmalarRecord: async (recordId) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const { error } = await supabase
+            .from('incoming_records')
+            .delete()
             .eq('id', recordId);
 
         if (error) throw new Error(error.message);

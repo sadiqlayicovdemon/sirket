@@ -106,14 +106,38 @@ export const KassaView = {
 
         this.loadData();
         this.setupRealtime();
-        document.getElementById('kassa-table-body')?.addEventListener('click', (e) => {
-            const btn = e.target?.closest?.('[data-edit-kassa]');
-            if (!btn) return;
+        document.getElementById('kassa-table-body')?.addEventListener('click', async (e) => {
+            const deleteBtn = e.target?.closest?.('[data-delete-kassa]');
+            const editBtn = e.target?.closest?.('[data-edit-kassa]');
+
+            if (deleteBtn) {
+                if (!canEditDocs) {
+                    alert('Yalnız admin və müdir silə bilər.');
+                    return;
+                }
+                const id = Number(deleteBtn.dataset.deleteKassa);
+                if (!id) return;
+                const ok = confirm('Bu əməliyyatı silmək istəyirsiniz?');
+                if (!ok) return;
+
+                try {
+                    await api.deleteKassaRecord(id);
+                    this._kassaEditingId = null;
+                    modal.classList.add('hidden');
+                    modal.classList.remove('modal-active');
+                    this.loadData();
+                } catch (err) {
+                    alert('Silinmə alınmadı: ' + err.message);
+                }
+                return;
+            }
+
+            if (!editBtn) return;
             if (!canEditDocs) {
                 alert('Yalnız admin və müdir sənədləri düzəldə bilər.');
                 return;
             }
-            const id = Number(btn.dataset.editKassa);
+            const id = Number(editBtn.dataset.editKassa);
             const row = (this._todayKassaData || []).find(r => r.id === id);
             if (row) this.openEditModal(row);
         });
@@ -335,7 +359,16 @@ export const KassaView = {
                 <td style="color:${color}; font-weight:500;">${row.type}</td>
                 <td style="color:${color}; font-weight:500;">${row.amount}</td>
                 <td>
-                    ${this._canEditDocs ? `<button class="btn-outline btn-sm" data-edit-kassa="${row.id}">Düzəliş</button>` : '-'}
+                    ${
+                        this._canEditDocs
+                            ? `
+                                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                                    <button class="btn-outline btn-sm btn-danger" data-delete-kassa="${row.id}">Sil</button>
+                                    <button class="btn-outline btn-sm" data-edit-kassa="${row.id}">Düzəliş</button>
+                                </div>
+                              `
+                            : '-'
+                    }
                 </td>
             </tr>`;
         }).join('');
