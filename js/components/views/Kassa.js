@@ -36,6 +36,35 @@ export const KassaView = {
                     <div class="stat-details"><p>Son Qalıq</p><h3 id="stat-final">0 ₼</h3></div>
                 </div>
             </div>
+
+            <div class="stats-grid mt-4">
+                <div class="stat-card glass-panel" style="grid-column: 1/-1;">
+                    <div class="stat-header" style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                        <div class="stat-icon income"><i class="ph ph-trend-up"></i></div>
+                        <h3 style="margin:0;">Ümumi Mədaxil</h3>
+                    </div>
+                    <div style="padding-left:44px;">
+                        <div class="stat-details"><p style="margin-bottom:4px;">Ümumi Qəbul Edilən Pul</p><h3 id="stat-income-total" style="color:var(--success);">0 ₼</h3></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid mt-4">
+                <div class="stat-card glass-panel" style="grid-column: 1/-1;">
+                    <div class="stat-header" style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                        <div class="stat-icon expense"><i class="ph ph-trend-down"></i></div>
+                        <h3 style="margin:0;">Ümumi Xərc</h3>
+                    </div>
+                    <div style="padding-left:44px;">
+                        <div style="margin-bottom:12px;">
+                            <div class="stat-details"><p style="margin-bottom:4px;">Ümumi Məxaric</p><h3 id="stat-expense-total" style="color:var(--danger);">0 ₼</h3></div>
+                        </div>
+                        <div>
+                            <div class="stat-details"><p style="margin-bottom:4px;">Ümumi Ödəniş (Xərc)</p><h3 id="stat-cost-total" style="color:var(--danger);">0 ₼</h3></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="table-container glass-panel mt-4">
                 <div class="table-header">
@@ -472,6 +501,21 @@ export const KassaView = {
             return record.type === 'Xerc' ? sum + this.parseAmount(record.amount) : sum;
         }, 0);
 
+        // Calculate total income from all kassa data
+        const allTimeIncome = kassaData.reduce((sum, record) => {
+            return record.type === 'Mədaxil' ? sum + this.parseAmount(record.amount) : sum;
+        }, 0);
+
+        // Calculate total expenses from all kassa data
+        const allTimeExpense = kassaData.reduce((sum, record) => {
+            return record.type === 'Məxaric' ? sum + this.parseAmount(record.amount) : sum;
+        }, 0);
+
+        // Calculate total costs from all kassa data
+        const allTimeCost = kassaData.reduce((sum, record) => {
+            return record.type === 'Xerc' ? sum + this.parseAmount(record.amount) : sum;
+        }, 0);
+
         const finalBalance = initialBalance + totalIncome - totalExpense - totalCost;
 
         const initialEl = document.getElementById('stat-initial');
@@ -479,6 +523,9 @@ export const KassaView = {
         const expenseEl = document.getElementById('stat-expense');
         const costEl = document.getElementById('stat-cost');
         const finalEl = document.getElementById('stat-final');
+        const incomeTotalEl = document.getElementById('stat-income-total');
+        const expenseTotalEl = document.getElementById('stat-expense-total');
+        const costTotalEl = document.getElementById('stat-cost-total');
 
         if (initialEl) initialEl.textContent = `${initialBalance.toLocaleString('az-AZ')} ₼`;
         if (incomeEl) incomeEl.textContent = `${totalIncome.toLocaleString('az-AZ')} ₼`;
@@ -488,5 +535,10 @@ export const KassaView = {
             finalEl.textContent = `${finalBalance.toLocaleString('az-AZ')} ₼`;
             finalEl.style.color = finalBalance >= 0 ? 'var(--success)' : 'var(--danger)';
         }
+        
+        // Update summary cards
+        if (incomeTotalEl) incomeTotalEl.textContent = `${allTimeIncome.toLocaleString('az-AZ')} ₼`;
+        if (expenseTotalEl) expenseTotalEl.textContent = `${allTimeExpense.toLocaleString('az-AZ')} ₼`;
+        if (costTotalEl) costTotalEl.textContent = `${allTimeCost.toLocaleString('az-AZ')} ₼`;
     }
 };
