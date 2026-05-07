@@ -38,19 +38,15 @@ export const KassaView = {
             </div>
 
             <div class="stats-grid mt-4">
-                <div class="stat-card glass-panel">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                        <div class="stat-icon income"><i class="ph ph-trend-up"></i></div>
-                        <p style="margin:0; font-size:12px;">Ümumi Mədaxil</p>
+                <div class="stat-card glass-panel" style="grid-column: 1/-1;">
+                    <div style="margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <p style="margin:0; font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:6px;">Ümumi Mədaxil</p>
+                        <h3 id="stat-income-total" style="color:var(--success); margin:0; font-size:16px;">0 ₼</h3>
                     </div>
-                    <h3 id="stat-income-total" style="color:var(--success); margin:0; font-size:16px;">0 ₼</h3>
-                </div>
-                <div class="stat-card glass-panel">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                        <div class="stat-icon expense"><i class="ph ph-trend-down"></i></div>
-                        <p style="margin:0; font-size:12px;">Ümumi Xərc</p>
+                    <div>
+                        <p style="margin:0; font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:6px;">Ümumi Xərc</p>
+                        <h3 id="stat-total-expense" style="color:var(--danger); margin:0; font-size:16px;">0 ₼</h3>
                     </div>
-                    <h3 id="stat-total-expense" style="color:var(--danger); margin:0; font-size:16px;">0 ₼</h3>
                 </div>
             </div>
             
