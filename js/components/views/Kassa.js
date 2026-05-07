@@ -283,8 +283,15 @@ export const KassaView = {
 
     parseAmount(value) {
         if (!value) return 0;
-        const parsed = parseFloat(value.toString().replace(/[^\d.-]/g, ''));
-        return isNaN(parsed) ? 0 : parsed;
+        const cleaned = value
+            .toString()
+            // keep digits and separators, drop currency/symbols
+            .replace(/[^\d.,-]/g, '')
+            // handle thousand separators like "1,200"
+            .replace(/,/g, '');
+        const parsed = parseFloat(cleaned);
+        // Amount string may already contain +/- sign; keep calculations type-driven.
+        return isNaN(parsed) ? 0 : Math.abs(parsed);
     },
 
     updateStats(kassaData, todayData, todayStr) {
