@@ -709,6 +709,81 @@ export const api = {
         throw new Error('Contact type düzgün deyil.');
     },
 
+    updateContact: async (contactData) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const { id, type, name, company, phone, email, address, oldName } = contactData;
+        if (!id || !type) throw new Error('Məlumat natamamdır.');
+        if (!name) throw new Error('Ad boş ola bilməz.');
+
+        if (type === 'buyer') {
+            const { error: customerErr } = await supabase
+                .from('customers')
+                .update({
+                    name,
+                    company: company || null,
+                    phone: phone || null,
+                    email: email || null,
+                    address: address || null
+                })
+                .eq('id', id);
+            if (customerErr) throw new Error(customerErr.message);
+
+            // Cascade rename in related docs
+            if (oldName && oldName !== name) {
+                const { error: salesErr } = await supabase
+                    .from('sales_records')
+                    .update({ customer_name: name })
+                    .eq('customer_name', oldName);
+                if (salesErr) throw new Error(salesErr.message);
+
+                const { error: kassaErr } = await supabase
+                    .from('kassa_records')
+                    .update({ customer_name: name })
+                    .eq('customer_name', oldName)
+                    .eq('document_type', 'Mədaxil');
+                if (kassaErr) throw new Error(kassaErr.message);
+            }
+
+            return { success: true };
+        }
+
+        if (type === 'seller') {
+            const { error: supplierErr } = await supabase
+                .from('suppliers')
+                .update({
+                    name,
+                    company: company || null,
+                    phone: phone || null,
+                    email: email || null,
+                    address: address || null
+                })
+                .eq('id', id);
+            if (supplierErr) throw new Error(supplierErr.message);
+
+            // Cascade rename in related docs
+            if (oldName && oldName !== name) {
+                const { error: incomingErr } = await supabase
+                    .from('incoming_records')
+                    .update({ supplier_name: name })
+                    .eq('supplier_name', oldName);
+                if (incomingErr) throw new Error(incomingErr.message);
+
+                const { error: kassaErr } = await supabase
+                    .from('kassa_records')
+                    .update({ customer_name: name })
+                    .eq('customer_name', oldName)
+                    .eq('document_type', 'Məxaric');
+                if (kassaErr) throw new Error(kassaErr.message);
+            }
+
+            return { success: true };
+        }
+
+        throw new Error('Contact type düzgün deyil.');
+    },
+
     // Add expense item
     addExpenseItem: async (itemData) => {
         await delay(API_DELAY);
@@ -738,5 +813,36 @@ export const api = {
                 desc: data.description || ''
             }
         };
+    },
+
+    updateExpenseItem: async (itemData) => {
+        await delay(API_DELAY);
+        if (!supabase) throw new Error('Supabase hazır deyil. Səhifəni yeniləyin.');
+
+        const { id, name, category, desc, oldName } = itemData;
+        if (!id) throw new Error('Xərc maddəsi ID tapılmadı.');
+        if (!name) throw new Error('Maddə adı boş ola bilməz.');
+
+        const { error } = await supabase
+            .from('expense_items')
+            .update({
+                name,
+                category: category || 'Digər',
+                description: desc || null
+            })
+            .eq('id', id);
+        if (error) throw new Error(error.message);
+
+        // Cascade rename in kassa xerc records
+        if (oldName && oldName !== name) {
+            const { error: kassaErr } = await supabase
+                .from('kassa_records')
+                .update({ description: name })
+                .eq('description', oldName)
+                .eq('document_type', 'Xerc');
+            if (kassaErr) throw new Error(kassaErr.message);
+        }
+
+        return { success: true };
     }
 };

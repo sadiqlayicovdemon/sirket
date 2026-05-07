@@ -259,6 +259,25 @@ export const MusteriView = {
             e.preventDefault();
             await this.addExpense();
         });
+
+        // Inline edit actions
+        document.getElementById('buyers-table-body')?.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.edit-buyer-btn');
+            if (!btn) return;
+            await this.editBuyer(btn.dataset);
+        });
+
+        document.getElementById('sellers-table-body')?.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.edit-seller-btn');
+            if (!btn) return;
+            await this.editSeller(btn.dataset);
+        });
+
+        document.getElementById('expenses-table-body')?.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.edit-expense-btn');
+            if (!btn) return;
+            await this.editExpense(btn.dataset);
+        });
     },
 
     async loadBuyers() {
@@ -282,8 +301,7 @@ export const MusteriView = {
                     <td>${buyer.email || '-'}</td>
                     <td>${buyer.address || '-'}</td>
                     <td>
-                        <button class="icon-btn" onclick="alert('Redaktə: ${buyer.name}')"><i class="ph ph-pencil"></i></button>
-                        <button class="icon-btn" onclick="alert('Sil: ${buyer.name}')"><i class="ph ph-trash"></i></button>
+                        <button class="icon-btn edit-buyer-btn" data-id="${buyer.id}" data-name="${buyer.name}" data-company="${buyer.company || ''}" data-phone="${buyer.phone || ''}" data-email="${buyer.email || ''}" data-address="${buyer.address || ''}"><i class="ph ph-pencil"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -313,8 +331,7 @@ export const MusteriView = {
                     <td>${seller.email || '-'}</td>
                     <td>${seller.address || '-'}</td>
                     <td>
-                        <button class="icon-btn" onclick="alert('Redaktə: ${seller.name}')"><i class="ph ph-pencil"></i></button>
-                        <button class="icon-btn" onclick="alert('Sil: ${seller.name}')"><i class="ph ph-trash"></i></button>
+                        <button class="icon-btn edit-seller-btn" data-id="${seller.id}" data-name="${seller.name}" data-company="${seller.company || ''}" data-phone="${seller.phone || ''}" data-email="${seller.email || ''}" data-address="${seller.address || ''}"><i class="ph ph-pencil"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -343,8 +360,7 @@ export const MusteriView = {
                     <td>${item.desc || '-'}</td>
                     <td><span style="color:var(--success);">✓ Aktiv</span></td>
                     <td>
-                        <button class="icon-btn" onclick="alert('Redaktə: ${item.name}')"><i class="ph ph-pencil"></i></button>
-                        <button class="icon-btn" onclick="alert('Sil: ${item.name}')"><i class="ph ph-trash"></i></button>
+                        <button class="icon-btn edit-expense-btn" data-id="${item.id}" data-name="${item.name}" data-category="${item.category || 'Digər'}" data-desc="${item.desc || ''}"><i class="ph ph-pencil"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -405,6 +421,75 @@ export const MusteriView = {
             document.getElementById('expense-modal').classList.add('hidden');
             document.getElementById('expense-modal').classList.remove('modal-active');
             this.loadExpenses();
+        } catch (err) {
+            alert('Xəta: ' + err.message);
+        }
+    },
+
+    async editBuyer(data) {
+        const newName = prompt('Yeni alıcı adı:', data.name || '');
+        if (newName === null) return;
+        const trimmed = newName.trim();
+        if (!trimmed) return alert('Ad boş ola bilməz.');
+
+        try {
+            await api.updateContact({
+                id: Number(data.id),
+                type: 'buyer',
+                oldName: data.name,
+                name: trimmed,
+                company: data.company || '',
+                phone: data.phone || '',
+                email: data.email || '',
+                address: data.address || ''
+            });
+            await Promise.all([this.loadBuyers(), this.loadSellers(), this.loadExpenses()]);
+            alert('Alıcı adı yeniləndi və bağlı sənədlərə tətbiq edildi.');
+        } catch (err) {
+            alert('Xəta: ' + err.message);
+        }
+    },
+
+    async editSeller(data) {
+        const newName = prompt('Yeni satıcı adı:', data.name || '');
+        if (newName === null) return;
+        const trimmed = newName.trim();
+        if (!trimmed) return alert('Ad boş ola bilməz.');
+
+        try {
+            await api.updateContact({
+                id: Number(data.id),
+                type: 'seller',
+                oldName: data.name,
+                name: trimmed,
+                company: data.company || '',
+                phone: data.phone || '',
+                email: data.email || '',
+                address: data.address || ''
+            });
+            await Promise.all([this.loadBuyers(), this.loadSellers(), this.loadExpenses()]);
+            alert('Satıcı adı yeniləndi və bağlı sənədlərə tətbiq edildi.');
+        } catch (err) {
+            alert('Xəta: ' + err.message);
+        }
+    },
+
+    async editExpense(data) {
+        const newName = prompt('Yeni xərc maddəsi adı:', data.name || '');
+        if (newName === null) return;
+        const trimmed = newName.trim();
+        if (!trimmed) return alert('Maddə adı boş ola bilməz.');
+
+        try {
+            await api.updateExpenseItem({
+                id: Number(data.id),
+                oldName: data.name,
+                name: trimmed,
+                category: data.category || 'Digər',
+                desc: data.desc || ''
+            });
+            await Promise.all([this.loadBuyers(), this.loadSellers(), this.loadExpenses()]);
+            alert('Xərc maddəsi yeniləndi və bağlı sənədlərə tətbiq edildi.');
         } catch (err) {
             alert('Xəta: ' + err.message);
         }
