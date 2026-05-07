@@ -57,7 +57,7 @@ export const FakturalarView = {
                     </div>
                     <div class="stat-card glass-panel">
                         <div class="stat-icon income"><i class="ph ph-shopping-cart"></i></div>
-                        <div class="stat-details"><p>Satılan məbləğ</p><h3 id="f-debt-sold">0 ₼</h3></div>
+                        <div class="stat-details"><p id="f-debt-sold-label">Satılan məbləğ</p><h3 id="f-debt-sold">0 ₼</h3></div>
                     </div>
                     <div class="stat-card glass-panel">
                         <div class="stat-icon expense"><i class="ph ph-bank"></i></div>
@@ -282,12 +282,13 @@ export const FakturalarView = {
 
         const initialEl = document.getElementById('f-debt-initial');
         const soldEl = document.getElementById('f-debt-sold');
+        const soldLabelEl = document.getElementById('f-debt-sold-label');
         const paidEl = document.getElementById('f-debt-paid');
         const finalEl = document.getElementById('f-debt-final');
         const titleEl = document.getElementById('f-debt-title');
         const periodEl = document.getElementById('f-debt-period');
 
-        if (!initialEl || !soldEl || !paidEl || !finalEl || !titleEl || !periodEl) return;
+        if (!initialEl || !soldEl || !soldLabelEl || !paidEl || !finalEl || !titleEl || !periodEl) return;
 
         const hasBuyer = Boolean(buyerValue);
         const hasSeller = Boolean(sellerValue);
@@ -303,6 +304,7 @@ export const FakturalarView = {
         const partyName = isBuyerMode ? buyerValue : sellerValue;
 
         titleEl.textContent = isBuyerMode ? `Alıcı: ${partyName}` : `Satıcı: ${partyName}`;
+        soldLabelEl.textContent = isBuyerMode ? 'Satılan məbləğ' : 'Alınan mal';
 
         const fromTs = fromValue ? new Date(`${fromValue}T00:00:00`).getTime() : null;
         const toTs = toValue ? new Date(`${toValue}T23:59:59`).getTime() : null;
