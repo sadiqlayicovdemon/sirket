@@ -218,10 +218,23 @@ export const SatisView = {
         customerSelect.appendChild(opt);
         customerSelect.value = row.customer || '';
 
-        const cleaned = String(row.amount || '')
-            .replace(/[^\d.,-]/g, '')
-            .replace(/,/g, '');
-        const num = parseFloat(cleaned);
+        const cleaned = String(row.amount || '').replace(/[^\d.,-]/g, '');
+
+        // Normalize az-AZ number format:
+        // - thousands separator: "."
+        // - decimal separator: ","
+        let normalized = cleaned;
+        if (normalized.includes('.') && normalized.includes(',')) {
+            normalized = normalized.replace(/\./g, '').replace(',', '.');
+        } else if (normalized.includes(',')) {
+            normalized = normalized.replace(/\./g, '').replace(',', '.');
+        } else if (normalized.includes('.') && !normalized.includes(',')) {
+            if (/^-?\d{1,3}(\.\d{3})+$/.test(normalized)) {
+                normalized = normalized.replace(/\./g, '');
+            }
+        }
+
+        const num = parseFloat(normalized);
         const abs = isNaN(num) ? 0 : Math.abs(num);
         amountInput.value = abs.toFixed(2);
 
@@ -236,14 +249,25 @@ export const SatisView = {
         try {
             // Use local date key to avoid timezone issues on mobile/tablet.
             const todayStr = api.dateKey(new Date());
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><i class="ph ph-spinner ph-spin"></i> API-dən məlumat çəkilir...</td></tr>';
             const res = await api.getSatisList();
             
             const todaySales = res.data
                 .filter(row => api.dateKey(row.date) === todayStr)
                 .reduce((sum, row) => {
-                    const amount = parseFloat(row.amount.toString().replace(/[^\d.-]/g, '')) || 0;
-                    return sum + amount;
+                    const cleaned = String(row.amount || '').replace(/[^\d.,-]/g, '');
+                    let normalized = cleaned;
+                    if (normalized.includes('.') && normalized.includes(',')) {
+                        normalized = normalized.replace(/\./g, '').replace(',', '.');
+                    } else if (normalized.includes(',')) {
+                        normalized = normalized.replace(/\./g, '').replace(',', '.');
+                    } else if (normalized.includes('.') && !normalized.includes(',')) {
+                        if (/^-?\d{1,3}(\.\d{3})+$/.test(normalized)) {
+                            normalized = normalized.replace(/\./g, '');
+                        }
+                    }
+                    const amount = parseFloat(normalized) || 0;
+                    return sum + Math.abs(amount);
                 }, 0);
 
             const todaySalesEl = document.getElementById('stat-today-sales');
@@ -264,7 +288,7 @@ export const SatisView = {
                 </tr>
             `).join('');
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--danger); text-align:center;">Xəta baş verdi!</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="color:var(--danger); text-align:center;">Xəta baş verdi!</td></tr>';
         }
     }
 };
