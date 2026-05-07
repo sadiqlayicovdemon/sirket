@@ -38,31 +38,13 @@ export const KassaView = {
             </div>
 
             <div class="stats-grid mt-4">
-                <div class="stat-card glass-panel" style="grid-column: 1/-1;">
-                    <div class="stat-header" style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-                        <div class="stat-icon income"><i class="ph ph-trend-up"></i></div>
-                        <h3 style="margin:0;">Ümumi Mədaxil</h3>
-                    </div>
-                    <div style="padding-left:44px;">
-                        <div class="stat-details"><p style="margin-bottom:4px;">Ümumi Qəbul Edilən Pul</p><h3 id="stat-income-total" style="color:var(--success);">0 ₼</h3></div>
-                    </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon income"><i class="ph ph-trend-up"></i></div>
+                    <div class="stat-details"><p>Ümumi Mədaxil</p><h3 id="stat-income-total" style="color:var(--success);">0 ₼</h3></div>
                 </div>
-            </div>
-
-            <div class="stats-grid mt-4">
-                <div class="stat-card glass-panel" style="grid-column: 1/-1;">
-                    <div class="stat-header" style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-                        <div class="stat-icon expense"><i class="ph ph-trend-down"></i></div>
-                        <h3 style="margin:0;">Ümumi Xərc</h3>
-                    </div>
-                    <div style="padding-left:44px;">
-                        <div style="margin-bottom:12px;">
-                            <div class="stat-details"><p style="margin-bottom:4px;">Ümumi Məxaric</p><h3 id="stat-expense-total" style="color:var(--danger);">0 ₼</h3></div>
-                        </div>
-                        <div>
-                            <div class="stat-details"><p style="margin-bottom:4px;">Ümumi Ödəniş (Xərc)</p><h3 id="stat-cost-total" style="color:var(--danger);">0 ₼</h3></div>
-                        </div>
-                    </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon expense"><i class="ph ph-trend-down"></i></div>
+                    <div class="stat-details"><p>Ümumi Xərc</p><h3 id="stat-total-expense" style="color:var(--danger);">0 ₼</h3></div>
                 </div>
             </div>
             
@@ -524,8 +506,7 @@ export const KassaView = {
         const costEl = document.getElementById('stat-cost');
         const finalEl = document.getElementById('stat-final');
         const incomeTotalEl = document.getElementById('stat-income-total');
-        const expenseTotalEl = document.getElementById('stat-expense-total');
-        const costTotalEl = document.getElementById('stat-cost-total');
+        const totalExpenseEl = document.getElementById('stat-total-expense');
 
         if (initialEl) initialEl.textContent = `${initialBalance.toLocaleString('az-AZ')} ₼`;
         if (incomeEl) incomeEl.textContent = `${totalIncome.toLocaleString('az-AZ')} ₼`;
@@ -536,9 +517,11 @@ export const KassaView = {
             finalEl.style.color = finalBalance >= 0 ? 'var(--success)' : 'var(--danger)';
         }
         
-        // Update summary cards
+        // Update summary cards - combined total expense
         if (incomeTotalEl) incomeTotalEl.textContent = `${allTimeIncome.toLocaleString('az-AZ')} ₼`;
-        if (expenseTotalEl) expenseTotalEl.textContent = `${allTimeExpense.toLocaleString('az-AZ')} ₼`;
-        if (costTotalEl) costTotalEl.textContent = `${allTimeCost.toLocaleString('az-AZ')} ₼`;
+        if (totalExpenseEl) {
+            const combinedExpense = allTimeExpense + allTimeCost;
+            totalExpenseEl.textContent = `${combinedExpense.toLocaleString('az-AZ')} ₼`;
+        }
     }
 };
