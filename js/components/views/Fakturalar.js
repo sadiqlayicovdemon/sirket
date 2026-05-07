@@ -33,6 +33,18 @@ export const FakturalarView = {
                                 <option value="">Hamısı</option>
                             </select>
                         </div>
+                        <div class="form-group" style="margin:0; min-width:220px;">
+                            <label>Sənəd növü</label>
+                            <select id="f-filter-kind">
+                                <option value="">Hamısı</option>
+                                <option value="satis">Satış</option>
+                                <option value="kassa-medaxil">Kassa - Mədaxil</option>
+                                <option value="kassa-mexaric">Kassa - Məxaric</option>
+                                <option value="kassa-xerc">Kassa - Xərc</option>
+                                <option value="daxil-olma">Daxil Olma</option>
+                                <option value="faktura">Faktura</option>
+                            </select>
+                        </div>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <button class="btn-outline btn-sm" id="f-filter-clear">Filtri sıfırla</button>
@@ -101,6 +113,7 @@ export const FakturalarView = {
         const toEl = document.getElementById('f-filter-to');
         const buyerEl = document.getElementById('f-filter-buyer');
         const sellerEl = document.getElementById('f-filter-seller');
+        const kindEl = document.getElementById('f-filter-kind');
         const clearBtn = document.getElementById('f-filter-clear');
 
         const onChange = () => this.applyFiltersAndRender();
@@ -118,11 +131,13 @@ export const FakturalarView = {
             }
             onChange();
         });
+        kindEl?.addEventListener('change', onChange);
         clearBtn?.addEventListener('click', () => {
             if (fromEl) fromEl.value = '';
             if (toEl) toEl.value = '';
             if (buyerEl) buyerEl.value = '';
             if (sellerEl) sellerEl.value = '';
+            if (kindEl) kindEl.value = '';
             this.applyFiltersAndRender();
         });
     },
@@ -239,6 +254,7 @@ export const FakturalarView = {
         const toValue = document.getElementById('f-filter-to')?.value || '';
         const buyerValue = document.getElementById('f-filter-buyer')?.value || '';
         const sellerValue = document.getElementById('f-filter-seller')?.value || '';
+        const kindValue = document.getElementById('f-filter-kind')?.value || '';
 
         const fromTs = fromValue ? new Date(`${fromValue}T00:00:00`).getTime() : null;
         const toTs = toValue ? new Date(`${toValue}T23:59:59`).getTime() : null;
@@ -249,6 +265,14 @@ export const FakturalarView = {
             if (Number.isFinite(toTs) && ts > toTs) return false;
             if (buyerValue && r.buyer !== buyerValue) return false;
             if (sellerValue && r.seller !== sellerValue) return false;
+            if (kindValue) {
+                if (kindValue === 'satis' && r.section !== 'Satış') return false;
+                if (kindValue === 'daxil-olma' && r.section !== 'Daxil Olma') return false;
+                if (kindValue === 'faktura' && r.section !== 'Faktura') return false;
+                if (kindValue === 'kassa-medaxil' && !(r.section === 'Kassa' && r.kassaType === 'Mədaxil')) return false;
+                if (kindValue === 'kassa-mexaric' && !(r.section === 'Kassa' && r.kassaType === 'Məxaric')) return false;
+                if (kindValue === 'kassa-xerc' && !(r.section === 'Kassa' && r.kassaType === 'Xerc')) return false;
+            }
             return true;
         });
 
