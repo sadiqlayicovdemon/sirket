@@ -519,11 +519,17 @@ export const KassaView = {
             finalEl.style.color = finalBalance >= 0 ? 'var(--success)' : 'var(--danger)';
         }
         
+        const combinedExpense = allTimeExpense + allTimeCost;
+        const totalsMatch = allTimeIncome === combinedExpense;
+
         // Update summary cards - combined total expense
-        if (incomeTotalEl) incomeTotalEl.textContent = `${allTimeIncome.toLocaleString('az-AZ')} ₼`;
+        if (incomeTotalEl) {
+            incomeTotalEl.textContent = `${allTimeIncome.toLocaleString('az-AZ')} ₼`;
+            incomeTotalEl.style.color = 'var(--success)';
+        }
         if (totalExpenseEl) {
-            const combinedExpense = allTimeExpense + allTimeCost;
             totalExpenseEl.textContent = `${combinedExpense.toLocaleString('az-AZ')} ₼`;
+            totalExpenseEl.style.color = totalsMatch ? 'var(--success)' : 'var(--danger)';
         }
     }
 };
