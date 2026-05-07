@@ -448,29 +448,7 @@ export const KassaView = {
     },
 
     parseAmount(value) {
-        if (!value) return 0;
-        const cleaned = String(value).replace(/[^\d.,-]/g, '');
-
-        // Normalize az-AZ number format:
-        // - thousands separator: "."
-        // - decimal separator: ","
-        let normalized = cleaned;
-        if (normalized.includes('.') && normalized.includes(',')) {
-            // e.g. 1.234,56
-            normalized = normalized.replace(/\./g, '').replace(',', '.');
-        } else if (normalized.includes(',')) {
-            // e.g. 123,45
-            normalized = normalized.replace(/\./g, '').replace(',', '.');
-        } else if (normalized.includes('.') && !normalized.includes(',')) {
-            // e.g. 10.000 -> 10000 (thousand groups)
-            if (/^-?\d{1,3}(\.\d{3})+$/.test(normalized)) {
-                normalized = normalized.replace(/\./g, '');
-            }
-        }
-
-        const parsed = parseFloat(normalized);
-        // Calculations are type-driven (income vs expense), so always return absolute.
-        return isNaN(parsed) ? 0 : Math.abs(parsed);
+        return api.parseMoney(value);
     },
 
     updateStats(kassaData, todayData, todayStr) {

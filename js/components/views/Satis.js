@@ -239,24 +239,7 @@ export const SatisView = {
         customerSelect.appendChild(opt);
         customerSelect.value = row.customer || '';
 
-        const cleaned = String(row.amount || '').replace(/[^\d.,-]/g, '');
-
-        // Normalize az-AZ number format:
-        // - thousands separator: "."
-        // - decimal separator: ","
-        let normalized = cleaned;
-        if (normalized.includes('.') && normalized.includes(',')) {
-            normalized = normalized.replace(/\./g, '').replace(',', '.');
-        } else if (normalized.includes(',')) {
-            normalized = normalized.replace(/\./g, '').replace(',', '.');
-        } else if (normalized.includes('.') && !normalized.includes(',')) {
-            if (/^-?\d{1,3}(\.\d{3})+$/.test(normalized)) {
-                normalized = normalized.replace(/\./g, '');
-            }
-        }
-
-        const num = parseFloat(normalized);
-        const abs = isNaN(num) ? 0 : Math.abs(num);
+        const abs = api.parseMoney(row.amount);
         amountInput.value = abs.toFixed(2);
 
         modal.classList.remove('hidden');
@@ -276,19 +259,7 @@ export const SatisView = {
             const todaySales = res.data
                 .filter(row => api.dateKey(row.date) === todayStr)
                 .reduce((sum, row) => {
-                    const cleaned = String(row.amount || '').replace(/[^\d.,-]/g, '');
-                    let normalized = cleaned;
-                    if (normalized.includes('.') && normalized.includes(',')) {
-                        normalized = normalized.replace(/\./g, '').replace(',', '.');
-                    } else if (normalized.includes(',')) {
-                        normalized = normalized.replace(/\./g, '').replace(',', '.');
-                    } else if (normalized.includes('.') && !normalized.includes(',')) {
-                        if (/^-?\d{1,3}(\.\d{3})+$/.test(normalized)) {
-                            normalized = normalized.replace(/\./g, '');
-                        }
-                    }
-                    const amount = parseFloat(normalized) || 0;
-                    return sum + Math.abs(amount);
+                    return sum + api.parseMoney(row.amount);
                 }, 0);
 
             const todaySalesEl = document.getElementById('stat-today-sales');

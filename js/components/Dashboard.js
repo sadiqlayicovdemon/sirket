@@ -1,11 +1,11 @@
 import { AuthState } from '../state/auth.js';
 import { Router } from '../router.js';
 // Cache-busting to keep desktop/mobile in sync after redeploy.
-import { KassaView } from './views/Kassa.js?v=cache1';
-import { SatisView } from './views/Satis.js?v=cache1';
-import { DaxilOlmalarView } from './views/DaxilOlmalar.js?v=cache1';
-import { FakturalarView } from './views/Fakturalar.js?v=cache1';
-import { MusteriView } from './views/Musteri.js?v=cache1';
+import { KassaView } from './views/Kassa.js?v=cache2';
+import { SatisView } from './views/Satis.js?v=cache2';
+import { DaxilOlmalarView } from './views/DaxilOlmalar.js?v=cache2';
+import { FakturalarView } from './views/Fakturalar.js?v=cache2';
+import { MusteriView } from './views/Musteri.js?v=cache2';
 
 export const Dashboard = {
     render() {

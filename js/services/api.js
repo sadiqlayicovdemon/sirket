@@ -113,6 +113,59 @@ export const api = {
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
     },
 
+    // Universal parser for monetary strings like:
+    // "+ 10.000 ₼", "-150 ₼", "20,000 ₼", "14.655,5 ₼"
+    // Returns absolute numeric value for calculations.
+    parseMoney: (value) => {
+        if (value === null || value === undefined) return 0;
+        if (typeof value === 'number') return Math.abs(value);
+
+        const s = String(value).trim();
+        if (!s) return 0;
+
+        const negative = s.includes('-');
+        let cleaned = s.replace(/[^\d.,-]/g, '');
+        if (!cleaned) return 0;
+
+        cleaned = cleaned.replace(/-/g, '');
+        if (!cleaned) return 0;
+
+        const countDot = (cleaned.match(/\./g) || []).length;
+        const countComma = (cleaned.match(/,/g) || []).length;
+        if (countDot === 0 && countComma === 0) {
+            const n = parseFloat(cleaned);
+            return isNaN(n) ? 0 : Math.abs(n);
+        }
+
+        const lastDot = cleaned.lastIndexOf('.');
+        const lastComma = cleaned.lastIndexOf(',');
+        const lastSepIndex = Math.max(lastDot, lastComma);
+        const sepChar = cleaned[lastSepIndex];
+
+        const left = cleaned.slice(0, lastSepIndex);
+        const right = cleaned.slice(lastSepIndex + 1);
+
+        const leftDigits = left.replace(/[.,]/g, '');
+        const rightDigits = right.replace(/[.,]/g, '');
+
+        // If both separators exist, assume:
+        // thousands separator = the other char, decimal separator = lastSepChar
+        if (countDot > 0 && countComma > 0) {
+            const n = parseFloat(`${leftDigits}.${rightDigits}`);
+            return isNaN(n) ? 0 : Math.abs(n) * (negative ? 1 : 1);
+        }
+
+        // Single separator type: if exactly 3 digits after the separator, treat as thousand separator.
+        if (rightDigits.length === 3) {
+            const n = parseFloat(`${leftDigits}${rightDigits}`);
+            return isNaN(n) ? 0 : Math.abs(n);
+        }
+
+        // Otherwise treat separator as decimal separator.
+        const n = parseFloat(`${leftDigits}.${rightDigits}`);
+        return isNaN(n) ? 0 : Math.abs(n);
+    },
+
     // Kassa Endpoints
     getKassaList: async () => {
         await delay(API_DELAY);

@@ -230,11 +230,7 @@ export const DaxilOlmalarView = {
         supplierSelect.appendChild(opt);
         supplierSelect.value = row.supplier || '';
 
-        const cleaned = String(row.total || '')
-            .replace(/[^\d.,-]/g, '')
-            .replace(/,/g, '');
-        const num = parseFloat(cleaned);
-        const abs = isNaN(num) ? 0 : Math.abs(num);
+        const abs = api.parseMoney(row.total);
         totalInput.value = abs.toFixed(2);
 
         modal.classList.remove('hidden');
