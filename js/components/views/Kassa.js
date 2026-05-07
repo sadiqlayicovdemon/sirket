@@ -38,19 +38,18 @@ export const KassaView = {
             </div>
 
             <div class="stats-grid mt-4">
-                <div class="stat-card glass-panel" style="grid-column: 1/-1;">
-                    <div style="margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1);">
-                        <p style="margin:0; font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:6px;">Ümumi Mədaxil</p>
-                        <h3 id="stat-income-total" style="color:var(--success); margin:0; font-size:16px;">0 ₼</h3>
+                <div class="stat-card glass-panel" style="grid-column: 1/-1; padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                        <span style="font-size:13px; color:rgba(255,255,255,0.8);">Ümumi Mədaxil:</span>
+                        <span id="stat-income-total" style="font-size:16px; color:var(--success);">0 ₼</span>
                     </div>
-                    <div>
-                        <p style="margin:0; font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:6px;">Ümumi Xərc</p>
-                        <h3 id="stat-total-expense" style="color:var(--danger); margin:0; font-size:16px;">0 ₼</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+                        <span style="font-size:13px; color:rgba(255,255,255,0.8);">Ümumi Xərc:</span>
+                        <span id="stat-total-expense" style="font-size:16px; color:var(--danger);">0 ₼</span>
                     </div>
                 </div>
             </div>
             
-            <div class="table-container glass-panel mt-4">
             <div class="table-container glass-panel mt-4">
                 <div class="table-header">
                     <h3>Kassa Əməliyyatları</h3>
