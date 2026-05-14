@@ -100,6 +100,17 @@ export const KassaView = {
                             <select id="k-expense" required>
                                 <option value="">Xərc maddəsini seçin...</option>
                             </select>
+                            <div class="k-expense-add-wrap" style="margin-top:12px;">
+                                <button type="button" class="btn-outline btn-sm" id="k-btn-toggle-new-expense" style="width:100%;">
+                                    <i class="ph ph-plus-circle"></i> Yeni xərc maddəsi əlavə et
+                                </button>
+                                <div id="k-new-expense-box" style="display:none; margin-top:12px; padding:12px; border-radius:12px; border:1px solid var(--border-color); background:rgba(0,0,0,0.22);">
+                                    <label style="display:block; margin-bottom:8px; font-size:0.85rem; color:var(--text-muted);">Siyahıda yoxdursa, bazaya əlavə edin</label>
+                                    <input type="text" id="k-new-expense-name" maxlength="120" placeholder="Maddə adı (məs: Su)" style="width:100%; margin-bottom:8px; padding:10px 12px; border-radius:8px; border:1px solid var(--border-color); background:rgba(0,0,0,0.25); color:var(--text-main); font-family:inherit;">
+                                    <input type="text" id="k-new-expense-category" maxlength="80" placeholder="Kateqoriya (boşdursa: Digər)" style="width:100%; margin-bottom:10px; padding:10px 12px; border-radius:8px; border:1px solid var(--border-color); background:rgba(0,0,0,0.25); color:var(--text-main); font-family:inherit;">
+                                    <button type="button" class="btn-primary btn-sm" id="k-btn-save-new-expense" style="width:100%;">Əlavə et və seç</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Məbləğ (₼)</label>
@@ -183,6 +194,7 @@ export const KassaView = {
             document.getElementById('expense-group').style.display = 'none';
             document.getElementById('k-desc').value = '';
             document.getElementById('k-expense').innerHTML = '<option value="">Xərc maddəsini seçin...</option>';
+            this.hideNewExpensePanel();
             modal.classList.remove('hidden');
             modal.classList.add('modal-active');
         });
@@ -199,6 +211,7 @@ export const KassaView = {
 
         typeSelect?.addEventListener('change', async (e) => {
             const selectedType = e.target.value;
+            this.hideNewExpensePanel();
             descInput.value = '';
             customerSelect.value = '';
             expenseSelect.value = '';
@@ -251,18 +264,63 @@ export const KassaView = {
                 expenseSelect.required = true;
 
                 try {
-                    const res = await api.getExpenseItems?.() || { data: [] };
-                    const items = res.data || [];
-                    expenseSelect.innerHTML = '<option value="">Xərc maddəsi seçin...</option>';
-                    items.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = typeof item === 'object' ? item.name : item;
-                        option.textContent = typeof item === 'object' ? item.name : item;
-                        expenseSelect.appendChild(option);
-                    });
+                    await this.fillExpenseSelect(expenseSelect);
                 } catch (err) {
                     console.error('Xərc maddələri yüklənmədi:', err);
                     expenseSelect.innerHTML = '<option value="">Xəta baş verdi</option>';
+                }
+            }
+        });
+
+        document.getElementById('k-btn-toggle-new-expense')?.addEventListener('click', () => {
+            const box = document.getElementById('k-new-expense-box');
+            const toggle = document.getElementById('k-btn-toggle-new-expense');
+            if (!box || !toggle) return;
+            const isHidden = box.style.display === 'none' || box.style.display === '';
+            if (isHidden) {
+                box.style.display = 'block';
+                toggle.innerHTML = '<i class="ph ph-caret-up"></i> Gizlət';
+                document.getElementById('k-new-expense-name')?.focus();
+            } else {
+                box.style.display = 'none';
+                toggle.innerHTML = '<i class="ph ph-plus-circle"></i> Yeni xərc maddəsi əlavə et';
+            }
+        });
+
+        document.getElementById('k-btn-save-new-expense')?.addEventListener('click', async () => {
+            const nameInput = document.getElementById('k-new-expense-name');
+            const catInput = document.getElementById('k-new-expense-category');
+            const name = nameInput?.value?.trim();
+            if (!name) {
+                alert('Xərc maddəsinin adını daxil edin.');
+                return;
+            }
+            const lower = name.toLowerCase();
+            const duplicate = Array.from(expenseSelect.options).some(
+                o => o.value && o.value.trim().toLowerCase() === lower
+            );
+            if (duplicate) {
+                expenseSelect.value = name;
+                alert('Bu adda maddə artıq siyahıdadır — seçildi.');
+                this.hideNewExpensePanel();
+                return;
+            }
+            const saveBtn = document.getElementById('k-btn-save-new-expense');
+            try {
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Yüklənir...';
+                }
+                const category = catInput?.value?.trim() || 'Digər';
+                await api.addExpenseItem({ name, category, desc: '' });
+                await this.fillExpenseSelect(expenseSelect, name);
+                this.hideNewExpensePanel();
+            } catch (err) {
+                alert('Əlavə olunmadı: ' + (err.message || String(err)));
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Əlavə et və seç';
                 }
             }
         });
@@ -271,6 +329,7 @@ export const KassaView = {
             modal.classList.add('hidden');
             modal.classList.remove('modal-active');
             this._kassaEditingId = null;
+            this.hideNewExpensePanel();
             document.getElementById('k-modal-title').textContent = 'Yeni Əməliyyat';
             submitBtn.textContent = 'Yarat';
         });
@@ -307,6 +366,7 @@ export const KassaView = {
                 form.reset();
                 this._kassaEditingId = null;
                 document.getElementById('k-modal-title').textContent = 'Yeni Əməliyyat';
+                this.hideNewExpensePanel();
                 this.loadData(); // reload table
             } catch(err) {
                 alert('Xəta: ' + err.message);
@@ -387,7 +447,7 @@ export const KassaView = {
         }).join('');
     },
 
-    openEditModal(row) {
+    async openEditModal(row) {
         if (!this._canEditDocs) return;
         const modal = document.getElementById('kassa-modal');
         const modalTitle = document.getElementById('k-modal-title');
@@ -448,16 +508,56 @@ export const KassaView = {
             expenseSelect.required = true;
             expenseSelect.disabled = false;
 
-            expenseSelect.innerHTML = '';
-            const opt = document.createElement('option');
-            opt.value = row.desc || '';
-            opt.textContent = row.desc || '';
-            expenseSelect.appendChild(opt);
-            expenseSelect.value = row.desc || '';
+            try {
+                await this.fillExpenseSelect(expenseSelect, row.desc || '');
+            } catch (_) {
+                expenseSelect.innerHTML = '<option value="">Xəta baş verdi</option>';
+            }
         }
+
+        this.hideNewExpensePanel();
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-active');
+    },
+
+    hideNewExpensePanel() {
+        const box = document.getElementById('k-new-expense-box');
+        const name = document.getElementById('k-new-expense-name');
+        const cat = document.getElementById('k-new-expense-category');
+        const toggle = document.getElementById('k-btn-toggle-new-expense');
+        if (box) box.style.display = 'none';
+        if (name) name.value = '';
+        if (cat) cat.value = '';
+        if (toggle) {
+            toggle.innerHTML = '<i class="ph ph-plus-circle"></i> Yeni xərc maddəsi əlavə et';
+        }
+    },
+
+    async fillExpenseSelect(selectEl, selectedValue = '') {
+        if (!selectEl) return;
+        selectEl.innerHTML = '<option value="">Xərc maddəsini seçin...</option>';
+        const res = await api.getExpenseItems();
+        const items = res.data || [];
+        items.forEach(item => {
+            const n = typeof item === 'object' ? item.name : item;
+            if (!n) return;
+            const option = document.createElement('option');
+            option.value = n;
+            option.textContent = n;
+            selectEl.appendChild(option);
+        });
+        if (selectedValue) {
+            const has = Array.from(selectEl.options).some(o => o.value === selectedValue);
+            if (has) selectEl.value = selectedValue;
+            else {
+                const opt = document.createElement('option');
+                opt.value = selectedValue;
+                opt.textContent = selectedValue;
+                selectEl.appendChild(opt);
+                selectEl.value = selectedValue;
+            }
+        }
     },
 
     parseAmount(value) {

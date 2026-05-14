@@ -10,7 +10,12 @@ export const Login = {
         
         section.innerHTML = `
             <div class="login-company-brand login-company-brand--page" aria-label="QUSEYNOFF MMC">
-                <span class="login-company-brand__text">QUSEYNOFF MMC</span>
+                <span class="login-company-brand__glow" aria-hidden="true"></span>
+                <span class="login-company-brand__ring" aria-hidden="true"></span>
+                <div class="login-company-brand__inner">
+                    <span class="login-company-brand__word">QUSEYNOFF</span>
+                    <span class="login-company-brand__suffix">MMC</span>
+                </div>
             </div>
             <div class="login-container">
                 <div class="glass-panel login-panel">

@@ -853,7 +853,11 @@ export const api = {
     addExpenseItem: async (itemData) => {
         await delay(API_DELAY);
         if (!supabase) {
-            DB.expenseItems.push(itemData);
+            DB.expenseItems.push({
+                name: itemData.name,
+                category: itemData.category || 'Digər',
+                desc: itemData.desc || ''
+            });
             return { success: true, data: itemData };
         }
 
