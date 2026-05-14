@@ -191,7 +191,7 @@ button {
     position: absolute;
     width: 280px;
     height: 120px;
-    background: radial-gradient(ellipse, rgba(99,102,241,0.5) 0%, rgba(236,72,153,0.2) 50%, transparent 70%);
+    background: radial-gradient(ellipse, rgba(99,102,241,0.6) 0%, rgba(59,130,246,0.4) 50%, transparent 70%);
     filter: blur(25px);
     opacity: 0.8;
     animation: superGlowPulse 4s ease-in-out infinite alternate;
@@ -219,22 +219,22 @@ button {
 }
 
 .login-company-brand__word {
-    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-size: clamp(2.5rem, 6.5vw, 4rem);
     font-weight: 800;
     letter-spacing: 2px;
     background: linear-gradient(
         to right,
         #fff 0%,
         #e2e8f0 20%,
-        #a5b4fc 40%,
-        #f472b6 60%,
+        #818cf8 40%,
+        #6366f1 60%,
         #fff 100%
     );
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    filter: drop-shadow(0 4px 15px rgba(99, 102, 241, 0.4));
+    filter: drop-shadow(0 4px 15px rgba(99, 102, 241, 0.5));
     animation: textGradientShine 4s linear infinite;
     transform: translateZ(20px);
     margin: 0;
@@ -246,10 +246,10 @@ button {
     font-weight: 700;
     letter-spacing: 4px;
     color: #fff;
-    background: linear-gradient(90deg, rgba(99,102,241,0.8), rgba(236,72,153,0.8));
+    background: linear-gradient(90deg, rgba(99,102,241,0.9), rgba(59,130,246,0.9));
     padding: 4px 14px;
     border-radius: 6px;
-    box-shadow: 0 4px 15px rgba(236,72,153,0.3);
+    box-shadow: 0 4px 15px rgba(59,130,246,0.4);
     border: 1px solid rgba(255, 255, 255, 0.15);
     transform: translateZ(30px);
     animation: suffixPulseGlow 2.5s ease-in-out infinite alternate;
