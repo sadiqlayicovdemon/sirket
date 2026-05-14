@@ -9,11 +9,11 @@ export const Login = {
         section.className = 'active';
         
         section.innerHTML = `
-            <div class="login-company-brand login-company-brand--page" aria-label="QUSEYNOFF MMC">
+            <div class="login-company-brand login-company-brand--page" aria-label="Quseynoff MMC">
                 <span class="login-company-brand__glow" aria-hidden="true"></span>
                 <span class="login-company-brand__ring" aria-hidden="true"></span>
                 <div class="login-company-brand__inner">
-                    <span class="login-company-brand__word">QUSEYNOFF</span>
+                    <span class="login-company-brand__word">Quseynoff</span>
                     <span class="login-company-brand__suffix">MMC</span>
                 </div>
             </div>

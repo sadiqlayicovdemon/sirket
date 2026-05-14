@@ -171,118 +171,111 @@ button {
 
 .login-company-brand {
     text-align: center;
+    perspective: 1200px;
+    margin-bottom: 2rem;
+    z-index: 10;
 }
 
 .login-company-brand--page {
     position: relative;
     width: 100%;
-    max-width: min(920px, 100%);
-    padding: clamp(12px, 2.5vw, 28px) 20px;
+    padding: clamp(20px, 4vw, 40px) 20px;
     margin: 0 auto;
-    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform-style: preserve-3d;
 }
 
 .login-company-brand__glow {
     position: absolute;
+    width: clamp(200px, 40vw, 400px);
+    height: clamp(200px, 40vw, 400px);
+    background: radial-gradient(circle, rgba(99,102,241,0.5) 0%, rgba(236,72,153,0.3) 40%, transparent 70%);
+    filter: blur(40px);
+    opacity: 0.8;
+    animation: superGlowPulse 6s ease-in-out infinite alternate;
+    z-index: 0;
     left: 50%;
     top: 50%;
-    width: min(100%, 520px);
-    height: clamp(72px, 14vw, 120px);
     transform: translate(-50%, -50%);
-    background:
-        radial-gradient(ellipse 80% 60% at 30% 50%, rgba(99, 102, 241, 0.45), transparent 55%),
-        radial-gradient(ellipse 70% 55% at 75% 45%, rgba(124, 58, 237, 0.35), transparent 50%),
-        radial-gradient(ellipse 50% 40% at 50% 80%, rgba(59, 130, 246, 0.25), transparent 45%);
-    filter: blur(28px);
-    opacity: 0.85;
-    animation: loginBrandAuraMorph 5.5s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 0;
 }
 
 .login-company-brand__ring {
     position: absolute;
+    width: clamp(240px, 45vw, 450px);
+    height: clamp(240px, 45vw, 450px);
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background: linear-gradient(var(--bg-dark), var(--bg-dark)) padding-box,
+                linear-gradient(135deg, #6366f1, #ec4899, #8b5cf6, #3b82f6) border-box;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    opacity: 0.6;
+    animation: superRingSpin 12s linear infinite;
+    z-index: 0;
     left: 50%;
     top: 50%;
-    width: min(calc(100% - 36px), 400px);
-    height: clamp(52px, 10vw, 80px);
-    margin: 0 auto;
-    transform: translate(-50%, -50%);
-    border-radius: 999px;
-    background: conic-gradient(
-        from 0deg,
-        transparent 0deg,
-        transparent 42deg,
-        rgba(99, 102, 241, 0.7) 105deg,
-        rgba(139, 92, 246, 0.55) 175deg,
-        rgba(59, 130, 246, 0.6) 248deg,
-        transparent 318deg,
-        transparent 360deg
-    );
-    opacity: 0.48;
-    animation: loginBrandRingSpin 14s linear infinite;
-    pointer-events: none;
-    z-index: 0;
-    filter: blur(0.5px);
 }
 
 .login-company-brand__inner {
     position: relative;
     z-index: 1;
-    display: inline-flex;
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.55rem 0.75rem;
-    animation: loginBrandInnerDrift 7s ease-in-out infinite;
+    gap: 12px;
+    background: rgba(25, 28, 41, 0.45);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    padding: clamp(20px, 4vw, 40px) clamp(30px, 6vw, 60px);
+    border-radius: 32px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 0 30px rgba(255,255,255,0.05);
+    animation: superFloat 7s ease-in-out infinite;
+    transform-style: preserve-3d;
 }
 
 .login-company-brand__word {
-    display: inline-block;
-    font-size: clamp(1.55rem, 5.2vw, 2.75rem);
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    line-height: 1.05;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: clamp(4px, 1vw, 8px);
     background: linear-gradient(
-        115deg,
-        #312e81 0%,
-        #4f46e5 18%,
-        #6366f1 38%,
-        #7c3aed 58%,
-        #4338ca 78%,
-        #2563eb 92%,
-        #4f46e5 100%
+        -45deg,
+        #fff 0%,
+        #e2e8f0 20%,
+        #818cf8 40%,
+        #c084fc 60%,
+        #f472b6 80%,
+        #fff 100%
     );
-    background-size: 280% 100%;
+    background-size: 300% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    filter: drop-shadow(0 0 24px rgba(99, 102, 241, 0.45)) drop-shadow(0 2px 14px rgba(15, 23, 42, 0.85));
-    animation: loginBrandWordShimmer 4.2s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.5));
+    animation: textGradientShine 5s linear infinite;
+    transform: translateZ(40px);
+    margin: 0;
+    line-height: 1.1;
 }
 
 .login-company-brand__suffix {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(0.65rem, 1.6vw, 0.78rem);
-    font-weight: 700;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: #a5b4fc;
-    padding: 0.42em 0.75em 0.42em 0.95em;
-    border-radius: var(--radius-md);
-    background: linear-gradient(
-        145deg,
-        rgba(99, 102, 241, 0.22),
-        rgba(67, 56, 202, 0.38)
-    );
-    border: 1px solid rgba(129, 140, 248, 0.4);
-    box-shadow:
-        0 0 0 1px rgba(15, 23, 42, 0.35) inset,
-        0 0 28px rgba(99, 102, 241, 0.25);
-    animation: loginBrandSuffixPulse 2.8s ease-in-out infinite;
+    font-size: clamp(0.9rem, 1.8vw, 1.4rem);
+    font-weight: 800;
+    letter-spacing: clamp(6px, 1.5vw, 14px);
+    color: #fff;
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+    padding: 8px 24px 8px clamp(30px, 4vw, 38px);
+    border-radius: 50px;
+    box-shadow: 0 0 25px rgba(236,72,153,0.5), inset 0 0 12px rgba(255,255,255,0.4);
+    transform: translateZ(50px);
+    animation: suffixPulseGlow 2.5s ease-in-out infinite alternate;
 }
 
 .input-group {
@@ -684,57 +677,30 @@ button {
     75% { transform: translateX(-5px); }
 }
 
-@keyframes loginBrandAuraMorph {
-    0%, 100% {
-        opacity: 0.72;
-        transform: translate(-50%, -50%) scale(0.9);
-    }
-    50% {
-        opacity: 0.98;
-        transform: translate(-50%, -50%) scale(1.08);
-    }
+@keyframes superGlowPulse {
+    0% { transform: translate(-50%, -50%) scale(0.8) rotate(0deg); opacity: 0.4; filter: blur(30px); }
+    100% { transform: translate(-50%, -50%) scale(1.4) rotate(180deg); opacity: 0.9; filter: blur(60px); }
 }
 
-@keyframes loginBrandRingSpin {
-    from {
-        transform: translate(-50%, -50%) rotate(0deg);
-    }
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
+@keyframes superRingSpin {
+    0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+    50% { transform: translate(-50%, -50%) rotate(180deg) scale(1.05); }
+    100% { transform: translate(-50%, -50%) rotate(360deg) scale(1); }
 }
 
-@keyframes loginBrandInnerDrift {
-    0%, 100% {
-        transform: translateY(0) perspective(560px) rotateX(5deg);
-    }
-    50% {
-        transform: translateY(-8px) perspective(560px) rotateX(-4deg);
-    }
+@keyframes superFloat {
+    0%, 100% { transform: translateY(0) rotateX(10deg) rotateY(-10deg); }
+    50% { transform: translateY(-20px) rotateX(-5deg) rotateY(10deg); }
 }
 
-@keyframes loginBrandWordShimmer {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
+@keyframes textGradientShine {
+    0% { background-position: 0% center; }
+    100% { background-position: 300% center; }
 }
 
-@keyframes loginBrandSuffixPulse {
-    0%, 100% {
-        box-shadow:
-            0 0 0 1px rgba(15, 23, 42, 0.35) inset,
-            0 0 18px rgba(99, 102, 241, 0.22);
-        border-color: rgba(129, 140, 248, 0.35);
-    }
-    50% {
-        box-shadow:
-            0 0 0 1px rgba(15, 23, 42, 0.35) inset,
-            0 0 40px rgba(99, 102, 241, 0.5);
-        border-color: rgba(165, 180, 252, 0.7);
-    }
+@keyframes suffixPulseGlow {
+    0% { box-shadow: 0 0 15px rgba(236,72,153,0.3), inset 0 0 5px rgba(255,255,255,0.2); }
+    100% { box-shadow: 0 0 35px rgba(236,72,153,0.9), inset 0 0 15px rgba(255,255,255,0.7); }
 }
 
 @media (prefers-reduced-motion: reduce) {
