@@ -29,9 +29,9 @@ const DB = {
         { id: 2, date: '2026-05-06T14:55:00', supplier: 'Global Electronics', count: '120 ədəd', total: '8,400 ₼', status: 'Yoxlanılır', statusClass: 'status-warning' }
     ],
     fakturalar: [
-        { id: 'INV-2026-001', date: '2026-05-05T13:20:00', company: 'ABC Consulting', amount: '1,500 ₼', status: 'Ödənilib', statusClass: 'status-success' },
-        { id: 'INV-2026-002', date: '2026-05-06T10:00:00', company: 'Tech Supply MMC', amount: '2,500 ₼', status: 'Ödənilməyib', statusClass: 'status-danger' },
-        { id: 'INV-2026-003', date: '2026-05-07T16:30:45', company: 'Marketing Agency', amount: '800 ₼', status: 'Gözləyir', statusClass: 'status-warning' }
+        { dbId: 1, id: 'INV-2026-001', date: '2026-05-05T13:20:00', company: 'ABC Consulting', amount: '1,500 ₼', status: 'Ödənilib', statusClass: 'status-success', desc: '' },
+        { dbId: 2, id: 'INV-2026-002', date: '2026-05-06T10:00:00', company: 'Tech Supply MMC', amount: '2,500 ₼', status: 'Ödənilməyib', statusClass: 'status-danger', desc: '' },
+        { dbId: 3, id: 'INV-2026-003', date: '2026-05-07T16:30:45', company: 'Marketing Agency', amount: '800 ₼', status: 'Gözləyir', statusClass: 'status-warning', desc: '' }
     ],
     buyers: [
         { name: 'Əli Məmmədov', company: 'ABC Corp', phone: '+994 50 123 4567', email: 'ali@abccorp.com', address: 'Bakı, Nəsimi' },
@@ -584,7 +584,7 @@ export const api = {
 
         const { data, error } = await supabase
             .from('invoices')
-            .select('invoice_number, issue_date, issue_time, company_name, amount, currency, status, description')
+            .select('id, invoice_number, issue_date, issue_time, company_name, amount, currency, status, description')
             .order('issue_date', { ascending: false })
             .order('issue_time', { ascending: false })
             .limit(500);
@@ -599,6 +599,7 @@ export const api = {
                     : status === 'Ödənilməyib' ? 'status-danger'
                         : 'status-warning';
             return {
+                dbId: r.id,
                 id: r.invoice_number,
                 date,
                 company: r.company_name,
@@ -610,6 +611,70 @@ export const api = {
         });
 
         return { success: true, data: rows };
+    },
+
+    updateFakturaRecord: async (recordId, recordData) => {
+        await delay(API_DELAY);
+        const datePart = (recordData.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
+        const timePart = (recordData.time || '12:00:00').toString().slice(0, 8);
+        const amountNum = Number(recordData.amount);
+        const company = (recordData.company || '').trim();
+        if (!company) throw new Error('Şirkət adı lazımdır.');
+        if (!Number.isFinite(amountNum) || amountNum <= 0) throw new Error('Məbləğ düzgün deyil.');
+
+        const status = recordData.status || 'Gözləyir';
+        const description = (recordData.description || '').trim() || null;
+
+        if (!supabase) {
+            const inv = DB.fakturalar.find(x => x.dbId === recordId);
+            if (!inv) throw new Error('Faktura tapılmadı.');
+            inv.company = company;
+            inv.amount = `${amountNum.toLocaleString('az-AZ')} ₼`;
+            inv.status = status;
+            inv.desc = description || '';
+            inv.date = `${datePart}T${timePart}`;
+            inv.statusClass =
+                status === 'Ödənilib' ? 'status-success'
+                    : status === 'Ödənilməyib' ? 'status-danger'
+                        : 'status-warning';
+            return { success: true };
+        }
+
+        const payload = {
+            issue_date: datePart,
+            issue_time: timePart,
+            company_name: company,
+            amount: amountNum,
+            currency: 'AZN',
+            status,
+            description
+        };
+
+        const { error } = await supabase
+            .from('invoices')
+            .update(payload)
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
+    },
+
+    deleteFakturaRecord: async (recordId) => {
+        await delay(API_DELAY);
+        if (!supabase) {
+            const idx = DB.fakturalar.findIndex(x => x.dbId === recordId);
+            if (idx === -1) throw new Error('Faktura tapılmadı.');
+            DB.fakturalar.splice(idx, 1);
+            return { success: true };
+        }
+
+        const { error } = await supabase
+            .from('invoices')
+            .delete()
+            .eq('id', recordId);
+
+        if (error) throw new Error(error.message);
+        return { success: true };
     },
 
     // Müşteri Endpoints - Buyers

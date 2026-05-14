@@ -165,6 +165,35 @@ button {
     font-size: 0.9rem;
 }
 
+.login-company-brand {
+    text-align: center;
+    margin: 4px 0 26px;
+    animation: loginBrandFloat 3.2s ease-in-out infinite;
+}
+
+.login-company-brand__text {
+    display: inline-block;
+    font-size: clamp(1.35rem, 5.5vw, 2.15rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    background: linear-gradient(
+        110deg,
+        #c7d2fe 0%,
+        #f8fafc 22%,
+        #a78bfa 45%,
+        #e0e7ff 68%,
+        #c7d2fe 100%
+    );
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 40px rgba(99, 102, 241, 0.35);
+    animation: loginBrandShimmer 5s linear infinite;
+}
+
 .input-group {
     position: relative;
     margin-bottom: 20px;
@@ -562,6 +591,30 @@ button {
     25% { transform: translateX(-5px); }
     50% { transform: translateX(5px); }
     75% { transform: translateX(-5px); }
+}
+
+@keyframes loginBrandFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes loginBrandShimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .login-company-brand,
+    .login-company-brand__text {
+        animation: none;
+    }
+
+    .login-company-brand__text {
+        color: var(--text-main);
+        background: none;
+        -webkit-background-clip: unset;
+        background-clip: unset;
+    }
 }
 
 /* Responsive Layout */

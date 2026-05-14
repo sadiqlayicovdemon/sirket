@@ -16,6 +16,9 @@ export const Login = {
                         <h1>Sistemə Giriş</h1>
                         <p>Biznes panelinə xoş gəlmisiniz (Müasir)</p>
                     </div>
+                    <div class="login-company-brand" aria-label="QUSEYNOFF MMC">
+                        <span class="login-company-brand__text">QUSEYNOFF MMC</span>
+                    </div>
                     <form id="login-form">
                         <div class="input-group">
                             <i class="ph ph-user"></i>
