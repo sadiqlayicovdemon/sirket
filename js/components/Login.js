@@ -9,15 +9,15 @@ export const Login = {
         section.className = 'active';
         
         section.innerHTML = `
+            <div class="login-company-brand login-company-brand--page" aria-label="QUSEYNOFF MMC">
+                <span class="login-company-brand__text">QUSEYNOFF MMC</span>
+            </div>
             <div class="login-container">
                 <div class="glass-panel login-panel">
                     <div class="login-header">
                         <i class="ph ph-briefcase logo-icon"></i>
                         <h1>Sistemə Giriş</h1>
                         <p>Biznes panelinə xoş gəlmisiniz (Müasir)</p>
-                    </div>
-                    <div class="login-company-brand" aria-label="QUSEYNOFF MMC">
-                        <span class="login-company-brand__text">QUSEYNOFF MMC</span>
                     </div>
                     <form id="login-form">
                         <div class="input-group">
